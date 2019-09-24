@@ -1,0 +1,193 @@
+\documentclass[a4paper]{scrreprt}
+
+% Uncomment to optimize for double-sided printing.
+% \KOMAoptions{twoside}
+
+% Set binding correction manually, if known.
+% \KOMAoptions{BCOR=2cm}
+
+% Localization options
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Quotations
+\usepackage{dirtytalk}
+
+% Enhanced verbatim sections. We're mainly interested in
+% \verbatiminput though.
+\usepackage{verbatim}
+
+% PDF-compatible landscape mode.
+% Makes PDF viewers show the page rotated by 90°.
+\usepackage{pdflscape}
+
+% Advanced tables
+\usepackage{tabu}
+\usepackage{longtable}
+
+% Fancy tablerules
+\usepackage{booktabs}
+
+% Graphics
+\usepackage{graphicx}
+
+% Current time
+\usepackage[useregional=numeric]{datetime2}
+
+% Float barriers.
+% Automatically add a FloatBarrier to each \section
+\usepackage[section]{placeins}
+
+% Custom header and footer
+\usepackage{fancyhdr}
+
+\usepackage{geometry}
+\usepackage{layout}
+
+% Math tools
+\usepackage{mathtools}
+% Math symbols
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
+\pagestyle{plain}
+% \fancyhf{}
+% \lhead{}
+% \lfoot{}
+% \rfoot{}
+% 
+% Source code & highlighting
+\usepackage{listings}
+
+% Convenience commands
+\newcommand{\mailsubject}{41100 - Cryptography - Series 1}
+\newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
+                               {#1}}
+
+% Should use this command wherever the print date is mentioned.
+\newcommand{\printdate}{\today}
+
+\subject{41100 - Cryptography}
+\title{Series 1}
+
+\author{Michael Senn \maillink{michael.senn@students.unibe.ch} - 16-126-880}
+
+\date{\printdate}
+
+% Needs to be the last command in the preamble, for one reason or
+% another. 
+\usepackage{hyperref}
+
+
+\begin{document}
+\maketitle
+
+
+\setcounter{chapter}{0}
+\chapter{Series 1}
+
+\section{Hiding the plaintext statistics of natural language}
+
+\subsection{Uniform letter statistics and monoalphabetic substitution}
+
+As the compressed text will have a nearly uniform letter statistics, the
+monoalphabetic substitution thereof, by extension of being a bijection, will
+have so as well. This prevents any cryptanalysis of the cipher text.
+
+As such, each of the $26!$ possible substitution tables is roughly equally
+likely, which does require the adversary to systematically try possible
+substitution tables, and check whether the decrypted message contains valid
+information.
+
+\subsection{Homophonic substitution}
+
+As above, the flattened frequency distribution makes it harder to perform
+cryptanalysis.
+
+Furthermore the key space will be significantly larger still, making a
+brute-force approach even less realistic. Assuming each letter in the input has
+at least one substituent assigned, the theoretical size of the key space is
+given as:
+
+\[
+	\binom{100}{26} \cdot 26! \cdot 26^{100 - 26}
+\]
+
+However many of these keys will be identical, as any permutation of homophones
+per plaintext letters yields the same result. A lower bound on the key space
+might hence be given as $26^{100 - 26}$, which is still significantly larger
+than the $26! < 26^{26} < 26^{74}$ possible keys in the case of monoalphabetic
+substitution.
+
+\subsection{Compression and encryption}
+
+If compression is used for the outer layer, that is after encryption, then
+compression can, by nature of being an easily reversible process, be undone.
+The decompressed ciphertext then offers precisely as much security as the used
+encryption algorithm provides.
+
+If a to-be-encrypted message is compressed before encryption, then the effect
+is hard to classify. On the one hand compression will hide certain structures
+which exist in natural languages, but it might also introduce additional
+structure due to eg compression tables or file signatures.
+
+Assuming the used encryption algorithm hides any structure which existed in the
+plaintext, the order of operations should have no effect however.
+
+\section{Does the one-time pad leak information?}
+
+Let $m \in \{0, 1\}^\lambda$ be the plaintext message.
+
+Modifying the key space in the way Alice did limits the number of keys to
+$2^\lambda - 2$, and will limit the possible cipher texts to $\{0, 1\}^\lambda
+\setminus \{m, \neg m\}$. The resulting ciphertext will not be distributed
+uniformly over $\{0, 1\}^\lambda$, as two of the possible words have a
+probability of zero, while the others have a probability of $\frac{1}{2^\lambda
+- 2}$ each.
+
+Therefore, by observing the ciphertext $c$, the adversary knows that the
+plaintext is neither $c$ nor $\neg c$, gaining information about the plaintext.
+More formally, as $\abs{K} < \abs{M}$, perfect secrecy - ie the cipher text
+carrying no information about the plain text - is violated.
+
+Intuitively this can be explained such that, if all keys are allowed and a
+cipher text of \say{password = test} is observed, it is equally likely that the
+plaintext was \say{password = test}, \say{password = 1234}, or any other
+possible text of equal length. Hence allowing keys to be equal to $0^\lambda$
+or $1^\lambda$ does not detract from security.
+
+\section{One-time pad using the same key}
+
+Let $m = m_1 \dots m_n \in \{0, 1\}^n$, $m' = m'_1 \dots m'_n \in \{0, 1\}^n$
+be two plaintext messages. Let $k = k_1 \dots k_n \in \{0, 1\}^n$ be the shared
+key. Let $c = c_1 \dots c_n \in \{0, 1\}^n$, $c' = c'_1 \dots c'_n \in \{0,
+1\}^n$ be the two cipher texts.
+
+As $c_i = m_i \oplus k_i$, and $c'_i = m'_i \oplus k_i$, it follows that $c_i =
+c'_i \Leftrightarrow m_i = m'_i$. In words: If two corresponding bits of the
+cipher texts are equal, the two corresponding bits of the plaintext are equal
+as well.
+
+\section{Attack at one-time pad}
+
+\subsection{Known plaintext exposes key}
+
+Let $m = m_1 \dots m_n \in \{0, 1\}^n$ be the plaintext message, $k = k_1 \dots
+k_n \in \{0, 1\}^n$ the key. In the case of OTP, the cipher $c = c_1 \dots c_n
+\in \{0, 1\}^n$ is then given by $c_i := (m_i + k_i) \mod 2$ or, equivalently,
+$c_i := m_i \oplus k_i$
+
+By the properties of the XOR operator $a \oplus b = c \Rightarrow c = a \oplus
+b$. Hence each bit of the key can be derived as $k_i := m_i \oplus c_i$.
+
+\subsection{Security of OTP}
+
+Key recovery of OTP is only possible if the plaintext and cipher are known.  As
+each key must be used only once, an adversary gains no value from being able to
+recover the key used to encrypt a message he already has access to.
+
+\end{document}
+
