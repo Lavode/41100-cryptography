@@ -1,0 +1,167 @@
+\documentclass[a4paper]{scrreprt}
+
+% Uncomment to optimize for double-sided printing.
+% \KOMAoptions{twoside}
+
+% Set binding correction manually, if known.
+% \KOMAoptions{BCOR=2cm}
+
+% Localization options
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Quotations
+\usepackage{dirtytalk}
+
+% Enhanced verbatim sections. We're mainly interested in
+% \verbatiminput though.
+\usepackage{verbatim}
+
+% PDF-compatible landscape mode.
+% Makes PDF viewers show the page rotated by 90°.
+\usepackage{pdflscape}
+
+% Advanced tables
+\usepackage{tabu}
+\usepackage{longtable}
+
+% Fancy tablerules
+\usepackage{booktabs}
+
+% Graphics
+\usepackage{graphicx}
+
+% Current time
+\usepackage[useregional=numeric]{datetime2}
+
+% Float barriers.
+% Automatically add a FloatBarrier to each \section
+\usepackage[section]{placeins}
+
+% Custom header and footer
+\usepackage{fancyhdr}
+
+\usepackage{geometry}
+\usepackage{layout}
+
+% Math tools
+\usepackage{mathtools}
+% Math symbols
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
+\pagestyle{plain}
+% \fancyhf{}
+% \lhead{}
+% \lfoot{}
+% \rfoot{}
+% 
+% Source code & highlighting
+\usepackage{listings}
+
+% Convenience commands
+\newcommand{\mailsubject}{41100 - Cryptography - Series 2}
+\newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
+                               {#1}}
+
+% Should use this command wherever the print date is mentioned.
+\newcommand{\printdate}{\today}
+
+\subject{41100 - Cryptography}
+\title{Series 2}
+
+\author{Michael Senn \maillink{michael.senn@students.unibe.ch} - 16-126-880}
+
+\date{\printdate}
+
+% Needs to be the last command in the preamble, for one reason or
+% another. 
+\usepackage{hyperref}
+
+
+\begin{document}
+\maketitle
+
+
+\setcounter{chapter}{1}
+\chapter{Series 2}
+
+\section{Basics on libraries}
+
+\subsection{Programs and libraries}
+
+Note that the output of $L_1$ is distributed by $X \sim \{0, 1, \cdots, n-1\}$
+Let $X, Y$ iid as per above. Then:
+
+\begin{itemize}
+	\item $P[A_1 \diamond L_1 \Rightarrow 1] = P[X = Y] = \frac{1}{6}$
+	\item $P[A_1 \diamond L_2 \Rightarrow 1] = P[0 = 0] = 1$
+	\item $P[A_2 \diamond L_1 \Rightarrow 1] = P[X \geq 3] = \frac{3}{6}$
+	\item $P[A_2 \diamond L_2 \Rightarrow 1] = P[0 \geq 3] = 0$
+
+\end{itemize}
+
+\subsection{Exchangability of libraries}
+
+\subsubsection{Bitwise complement}
+
+Note first that $L_{\text{left}}$ produces a uniform distribution on $\{0,
+1\}^n$. As the bitwise complement is a bijection of $\{0, 1\}^n$ on itself, it
+follows that $L_{\text{right}}$ is also uniformly distributed on that same set.
+Hence $L_{\text{left}} \equiv L_{\text{right}}$ independent of the choice of
+$n$.
+
+\subsubsection{2x \% n}
+
+Note that, for $n$ even, $L_{\text{right}}$ is uniformly distributed on:
+
+\[
+	2 \cdot Z_n \mod n = \{0, 2, \cdots, n - 2, n, n + 2, \cdots, 2n - 2\} \mod n = \{0, 2, \cdots, n - 2, 0, 2, \cdots, n - 2\}.
+\]
+
+For $n$ odd, $L_{\text{right}}$ is uniformly distributed on:
+
+\[
+	2 \cdot Z_n \mod n = \{0, 2, \cdots, n - 1, n + 1, \cdots, 2n - 2\} \mod n = \{0, 2, \cdots, n - 1, 1, 3, \cdots, n - 2\}.
+\]
+
+Clearly, for $n$ odd, the output follows the same distribution as
+$L_{\text{left}}$, so $L_{\text{left}} \equiv L_{\text{right}}$. For $n$ even,
+however, $L_{\text{right}}$ is uniformly distributed on $\{0, 2, \cdots,
+n-2\}$.
+
+A distinguisher $A$ can return $1$ if the given value is even, $0$ if it is
+odd. Then, $P[A \diamond L_{\text{left}} \Rightarrow 1] = \frac{1}{2} \neq P[A
+\diamond L_{\text{right}} \Rightarrow 1] = 1$. Hence $L_{\text{left}}$ and
+$L_{\text{right}}$ are not exchangable.
+
+\subsubsection{x AND y}
+
+As before, $L_{\text{right}}$ is uniformly distributed on $\{0, 1\}^n$. By the
+definition of the bitwise AND operation, for any bit $x_i$ in the output,
+$P[x_i = 0] = \frac{3}{4}$, and $P[x_i = 1] = \frac{1}{4}$.
+
+Let $k$ be the number of bits equal to $1$. In the case of $L_{\text{left}}$, k
+follows a binomial distribution $Binom(n, \frac{1}{4})$, in the case of
+$L_{\text{right}}$ it follows a binomial distribution $Binom(n, \frac{1}{2})$.
+
+This allows solving for the value of $k$ at which the likelihood of the output
+$x$ being produced by $L_{\text{left}}$ is equal to it being produced by
+$L_{\text{right}}$:
+
+\begin{align*}
+	& \binom{n}{k'} \left(\frac{1}{4}\right)^{k'} \left(\frac{3}{4}\right)^{n - k'} = \binom{n}{k'} \left(\frac{1}{2}\right)^n \\
+	\Rightarrow & \left(\frac{1}{4}\right)^{k'} \cdot \left(\frac{3}{4}\right)^{n - k'} = \left(\frac{1}{2}\right)^n \\
+	\Rightarrow & k' = \frac{n \cdot \log{\frac{3}{2}}}{\log{3}}
+\end{align*}
+
+A distinguisher $A$ can then output $1$ if $k > k'$, and $0$ if $k \leq k'$. It
+then follows that $P[A \diamond L_{\text{left}} \Rightarrow 1] \leq P[A
+\diamond L_{\text{right}} \Rightarrow 1]$, with equality only for special
+values of $n$ and $k$.
+
+\end{document}
+
