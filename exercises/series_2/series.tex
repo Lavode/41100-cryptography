@@ -93,8 +93,9 @@
 
 \subsection{Programs and libraries}
 
-Note that the output of $L_1$ is distributed by $X \sim \{0, 1, \cdots, n-1\}$
-Let $X, Y$ iid as per above. Then:
+Let $X, Y \sim Un(\{0, 1, \cdots, n-1\})$ iid. Per its definition, the output
+of $L_1.\text{RAND}$ follows $x$ respectively $Y$, and the output of $L_2.\text{RAND}$ is a constant
+$0$. Hence:
 
 \begin{itemize}
 	\item $P[A_1 \diamond L_1 \Rightarrow 1] = P[X = Y] = \frac{1}{6}$
@@ -129,13 +130,13 @@ For $n$ odd, $L_{\text{right}}$ is uniformly distributed on:
 \]
 
 Clearly, for $n$ odd, the output follows the same distribution as
-$L_{\text{left}}$, so $L_{\text{left}} \equiv L_{\text{right}}$. For $n$ even,
+$L_{\text{left}}$, so $L_{\text{left}} \equiv L_{\text{right}}$. For $n$ even
 however, $L_{\text{right}}$ is uniformly distributed on $\{0, 2, \cdots,
 n-2\}$.
 
 A distinguisher $A$ can return $1$ if the given value is even, $0$ if it is
-odd. Then, $P[A \diamond L_{\text{left}} \Rightarrow 1] = \frac{1}{2} \neq P[A
-\diamond L_{\text{right}} \Rightarrow 1] = 1$. Hence $L_{\text{left}}$ and
+odd. Then, $P[A \diamond L_{\text{left}} \Rightarrow 1] = \frac{1}{2} \neq 1 =
+P[A \diamond L_{\text{right}} \Rightarrow 1]$. Hence $L_{\text{left}}$ and
 $L_{\text{right}}$ are not exchangable.
 
 \subsubsection{x AND y}
@@ -161,7 +162,66 @@ $L_{\text{right}}$:
 A distinguisher $A$ can then output $1$ if $k > k'$, and $0$ if $k \leq k'$. It
 then follows that $P[A \diamond L_{\text{left}} \Rightarrow 1] \leq P[A
 \diamond L_{\text{right}} \Rightarrow 1]$, with equality only for special
-values of $n$ and $k$.
+values of $n$ and $k$ where the equation above yields an integer result.
+
+\section{Security of a modified One-time Pad (OTP)}
+
+We aim to show the one-time secrecy of the given algorithm by showing that
+$L_{\text{OTS-left}} \equiv L_{\text{OTS-right}}$, with the two libraries
+defined as in the lecture.
+
+For any two messages $m_1, m_2$, the output of the $eavesdrop()$ function of
+either library will be a bit-string $c_1 c_2 \cdots c_{n-2} c_{n-1} c_n$, with
+$c_{n - 1} = c_n = 0$, and $c_1 c_2 \cdots c_{n-2}$ being uniformly distributed
+on $\{0, 1\}^{n-2}$ due to being the result of OTP encryption.
+
+As the ciphertext will thus follow the same distribution in either case, any
+distinguishing algorithm $A$ is unable to differentiate between the two
+libraries in any way. As such, $P[A \diamond L_{\text{OTS-left}} \Rightarrow 1]
+= P[A \diamond L_{\text{OTS-right}} \Rightarrow 1]$, implying that the two
+libraries are exchangable, and the given cipher provides one-time secrecy.
+
+\section{Construction of a distinguisher}
+
+Let $m, k, c$ as in the exercise description.
+
+Note that for $m$ even, $k \cdot m \mod 10$ is even no matter the choice of
+$k$. For $m$ odd, $k \cdot m \mod 10$ is odd exactly if $k$ is odd, and even
+otherwise.
+\\
+
+\begin{tabular}{ccc}
+	\toprule
+	         & $k$ even & $k$ odd \\
+	\midrule
+	$m$ even & $c$ even & $c$ even \\
+	$m$ odd  & $c$ even & $c$ odd \\
+	\bottomrule
+\end{tabular}
+\\
+
+We now define the distinguishing algorithm $A$ as follows:
+
+\begin{lstlisting}[mathescape=true]
+	A:
+	  m_l <- 2
+	  m_r <- 3
+
+	  c = Eavesdrop(m_l, m_r)
+
+	  if c mod 2 == 0
+	    # 2/3 likelihood that m_l encrypted
+	    return 0
+	  else
+	    # Guaranteed that m_r encrypted
+	    return 1
+	  end
+\end{lstlisting}
+
+It then follows that $P[A \diamond L_{\text{OTS-left}} \Rightarrow 1] = 0 \neq
+\frac{1}{2} = P[A \diamond L_{\text{OTS-right}} \Rightarrow 1]$, hence the two
+libraries are not exchangable, and the encryption scheme does not provide
+one-time secrecy.
 
 \end{document}
 
