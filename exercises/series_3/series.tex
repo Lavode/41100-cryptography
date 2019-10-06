@@ -1,0 +1,311 @@
+\documentclass[a4paper]{scrreprt}
+
+% Uncomment to optimize for double-sided printing.
+% \KOMAoptions{twoside}
+
+% Set binding correction manually, if known.
+% \KOMAoptions{BCOR=2cm}
+
+% Localization options
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Quotations
+\usepackage{dirtytalk}
+
+% Enhanced verbatim sections. We're mainly interested in
+% \verbatiminput though.
+\usepackage{verbatim}
+
+% PDF-compatible landscape mode.
+% Makes PDF viewers show the page rotated by 90°.
+\usepackage{pdflscape}
+
+% Advanced tables
+\usepackage{tabu}
+\usepackage{longtable}
+
+% Fancy tablerules
+\usepackage{booktabs}
+
+% Graphics
+\usepackage{graphicx}
+
+% Current time
+\usepackage[useregional=numeric]{datetime2}
+
+% Float barriers.
+% Automatically add a FloatBarrier to each \section
+\usepackage[section]{placeins}
+
+% Custom header and footer
+\usepackage{fancyhdr}
+
+\usepackage{geometry}
+\usepackage{layout}
+
+% Math tools
+\usepackage{mathtools}
+% Math symbols
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
+\pagestyle{plain}
+% \fancyhf{}
+% \lhead{}
+% \lfoot{}
+% \rfoot{}
+% 
+% Source code & highlighting
+\usepackage{listings}
+
+% Convenience commands
+\newcommand{\mailsubject}{41100 - Cryptography - Series 3}
+\newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
+                               {#1}}
+
+% Should use this command wherever the print date is mentioned.
+\newcommand{\printdate}{\today}
+
+\subject{41100 - Cryptography}
+\title{Series 3}
+
+\author{Michael Senn \maillink{michael.senn@students.unibe.ch} - 16-126-880}
+
+\date{\printdate}
+
+% Needs to be the last command in the preamble, for one reason or
+% another. 
+\usepackage{hyperref}
+
+
+\begin{document}
+\maketitle
+
+
+\setcounter{chapter}{2}
+\chapter{Series 3}
+
+\section{Nested encryption scheme}
+
+We will show the one-time secrecy of $\Sigma^2$ by showing that
+$L^{\Sigma^2}_{\text{OTS}_L} \equiv L^{\Sigma^2}_{\text{OTS}_L}$.
+
+Consider the following library, as used in the definition of OTS:
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	$L^{\Sigma^2}_{\text{OTS}_L}$:
+	  Eavesdrop($m_l$, $m_r$):
+	    k <- $\Sigma^2$.KeyGen()
+	    c <- $\Sigma^2$.enc(k, m)
+	    return c
+\end{lstlisting}	
+
+We start by factoring out certain statements into a separate library, the
+composition of which is clearly equivalent to the above:
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	$L_{\text{hyb}_1}$:
+	  Eavesdrop($m_l$, $m_r$):
+	    c := CTXT($m_l$)
+	    return c
+
+	$\diamond$
+
+	$L^{\Sigma^2}_{\text{OTS\$}-\text{real}}$:
+	  CTXT(m):
+	    k <- $\Sigma^2$.KeyGen()
+	    c <- $\Sigma^2$.enc(k, m)
+	    return c
+\end{lstlisting}	
+
+We then inline the two $\Sigma^2$ functions per their definition:
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	$L_{\text{hyb}_2}$:
+	  Eavesdrop($m_l$, $m_r$):
+	    c := CTXT($m_l$)
+	    return c
+
+	$\diamond$
+
+	$L^{\Sigma^2}_{\text{OTS\$}-\text{real}'}$:
+	  CTXT(m):
+	    $k_1$ <- $\Sigma$.KeyGen()
+	    $k_2$ <- $\Sigma$.KeyGen()
+
+	    $c_1$ <- $\Sigma$.enc(k_1, m)
+	    $c_2$ <- $\Sigma$.enc(k_2, $c_1$)
+	    return $c_2$
+\end{lstlisting}	
+
+Rearranging the lines of $CTXT(m)$ allows to extract two subsequent invocations
+of $CTXT(m)$ of the $L^\Sigma_{\text{OTS\textdollar-real}}$ library:
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	$L_{\text{hyb}_3}$:
+	  Eavesdrop($m_l$, $m_r$):
+	    c := CTXT($m_l$)
+	    return c
+
+	$\diamond$
+
+	$L^{\Sigma^2}_{\text{OTS\$}-\text{real}'}$:
+	  CTXT(m):
+	    $c_1$ <- CTXT'(m)
+	    $c_2$ <- CTXT'($c_1$)
+	    return $c_2$
+
+	$\diamond$
+
+	$L^\Sigma_{\text{OTS\$}-\text{real}}$:
+	  CTXT'(m):
+	    k <- $\Sigma$.KeyGen()
+	    c <- $\Sigma$.enc(k, m)
+	    return $c$
+\end{lstlisting}	
+
+As $\Sigma$ satisfies OTS, $L^\Sigma_{\text{OTS\$}-\text{real}} \equiv
+L^\Sigma_{\text{OTS\$}-\text{rand}}$. We can then replace one library with the
+other:
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	$L_{\text{hyb}_4}$:
+	  Eavesdrop($m_l$, $m_r$):
+	    c := CTXT($m_l$)
+	    return c
+
+	$\diamond$
+
+	$L^{\Sigma^2}_{\text{OTS\$}-\text{real}'}$:
+	  CTXT(m):
+	    $c_1$ <- CTXT'(m)
+	    $c_2$ <- CTXT'($c_1$)
+	    return $c_2$
+
+	$\diamond$
+
+	$L^\Sigma_{\text{OTS\$}-\text{rand}}$:
+	  CTXT'(m):
+	    c <- $\Sigma$.C
+	    return $c$
+\end{lstlisting}	
+
+This now allows to replace $m_l$ with $m_r$ in the $Eavesdrop()$ function,
+after which all steps above can be undone in reverse order, finally showing
+that $L^{\Sigma^2}_{\text{OTS}_L} \equiv L^{\Sigma^2}_{\text{OTS}_L}$. Hence
+$\Sigma^2$ satisfies one-time secrecy.
+
+\section{Negligible functions}
+
+A function $f$ is negligible exactly if, for all polynomials $p(\lambda)$,
+the following holds:
+
+\[
+	\lim_{\lambda \rightarrow \infty} p(\lambda) f(\lambda) = 0
+\]
+
+As per claim 4.3 in the book it is sufficient to show this for polynomials of
+the form $\lambda^c, c \in \mathbb{Z}$.
+
+\subsection{Examples}
+
+\subsubsection{$2^{\frac{-\lambda}{2}}$}
+
+Note that $2^{\frac{\lambda}{2}}$ is an exponential. As, for sufficiently large
+values of $\lambda$, any exponential will grow faster than any polynomial it
+follows that:
+
+\[
+	\lim_{\lambda \rightarrow \infty} p(\lambda) \frac{1}{2^{\frac{\lambda}{2}}} = 0
+\]
+
+Hence $f$ is negligible.
+
+\subsubsection{$\lambda^{-2}$}
+
+Let $p(\lambda) := \lambda^3$. Then:
+
+\[
+	\lim_{\lambda \rightarrow \infty} p(\lambda) \frac{1}{\lambda^2} = \lambda \neq 0
+\]
+
+Hence $f$ is not negligible.
+
+\subsubsection{$\lambda^{-\frac{1}{\lambda}}$}
+
+Note first that, using L'Hospital's rule, $\lim_{\lambda \rightarrow \infty}
+\sqrt[\lambda]{\lambda} = 1$. Let $p(\lambda) := \lambda$, then:
+
+\[
+	\lim_{\lambda \rightarrow \infty} p(\lambda) \frac{1}{\sqrt[\lambda]{\lambda}} = 1 \neq 0
+\]
+
+Hence $f$ is not negligible.
+
+\subsubsection{$\lambda^{-\frac{1}{2}}$}
+
+Let $p(\lambda) := \sqrt{\lambda}$, then:
+
+\[
+	\lim_{\lambda \rightarrow \infty} p(\lambda) \frac{1}{\sqrt{\lambda}} = 1 \neq 0
+\]
+
+Hence $f$ is not negligible.
+
+\subsubsection{$2^{-\sqrt{\lambda}}$}
+
+As $\sqrt{\lambda}$ is not bound, $2^{\sqrt{\lambda}}$ is an exponential
+function. Using the same reasoning as for the first example, $f$ is hence
+negligible.
+
+\subsection{Multiplication and division of negligible functions}
+
+\subsubsection{Multiplication of negligible functions}
+
+\begin{proof}
+	Let $f(\lambda)$, $g(\lambda)$ be negligible. Let $p(\lambda)$ be any
+	polynomial function. We aim to show that $f \cdot g$ is negligible.
+
+	Note first that, if $f$ is negligible, the following holds for all
+	constants $c \in \mathbb{R}$, in particular for $c = 1$:
+	\begin{align*}
+		& \lim_{\lambda \rightarrow \infty} p(\lambda) f(\lambda) = 0 \\
+		\Rightarrow & \lim_{\lambda \rightarrow \infty} c \cdot f(\lambda) = 0
+	\end{align*}
+
+	As such:
+	\begin{align*}
+		\lim_{\lambda \rightarrow \infty} p(\lambda) \cdot (f(\lambda) \cdot g(\lambda)) 
+		  & = \lim_{\lambda \rightarrow \infty} (p(\lambda) \cdot f(\lambda)) \cdot g(\lambda) & \text{Associativity of multiplication} \\
+		  & = \lim_{\lambda \rightarrow \infty} 0 \cdot 0 & \text{Negligibility of $f$ and $g$} \\
+		  & = 0
+	\end{align*}
+
+	Hence $f \cdot g$ is negligible.
+\end{proof}
+
+\subsubsection{Division of negligible functions}
+
+Let $f(\lambda) := \frac{1}{2^\lambda}$, $g(\lambda) := \frac{1}{4^\lambda}$.
+Clearly both $f$ and $g$ are negligible, as seen in the previous exercise.
+However:
+
+\[
+	\frac{f(\lambda)}{g(\lambda)} = \frac{\frac{1}{2^\lambda}}{\frac{1}{4^\lambda}} = 2^\lambda
+\]
+
+which, by nature of being an exponential function, is not negligible.
+
+\section{Hashrate}
+
+\section{A random cipher}
+
+
+
+
+\end{document}
+
