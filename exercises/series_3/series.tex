@@ -62,6 +62,10 @@
 % Source code & highlighting
 \usepackage{listings}
 
+% SI units
+\usepackage[binary-units=true]{siunitx}
+\DeclareSIUnit\cycles{cycles}
+
 % Convenience commands
 \newcommand{\mailsubject}{41100 - Cryptography - Series 3}
 \newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
@@ -301,6 +305,24 @@ However:
 which, by nature of being an exponential function, is not negligible.
 
 \section{Hashrate}
+
+\subsection{AVX1 hashrate}
+
+Based on the linked document we can estimate the performance, in cycles per
+byte, of a single-threaded AVX1 CPU when processing \SI{1}{\mega\byte} blocks to be on
+the order of \SI{12.8}{\cycles \per \byte}.
+
+We then get the amount of cycles for a \SI{1}{\mega\byte} block as
+$\SI{12.8}{\cycles \per \byte} \cdot \SI{1}{\mega\byte} = \SI{1.2e7}{\cycles}$,
+and the hash rate as $\SI{e9}{\cycles \per \second} / \SI{1.2e7}{\cycles} =
+\SI{167}{hashes \per \second}$.
+
+\subsection{Comparison with Bitcoin hashrate}
+
+The current seven-day average hashrate of the Bitcoin network is around
+\SI{9.1e19}{hashes \per \second}. To achieve such a hash rate with AVX1 CPUs
+one would need $\SI{9.1e19}{hashes \per \second} / \SI{167}{hashes \per
+\second} \approx \SI{5.4e17}{CPUs}$
 
 \section{A random cipher}
 
