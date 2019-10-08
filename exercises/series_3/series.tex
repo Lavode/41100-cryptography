@@ -147,7 +147,7 @@ We then inline the two $\Sigma^2$ functions per their definition:
 \end{lstlisting}	
 
 Rearranging the lines of $CTXT(m)$ allows to extract two subsequent invocations
-of $CTXT(m)$ of the $L^\Sigma_{\text{OTS\textdollar-real}}$ library:
+of $CTXT'(m)$ of the $L^\Sigma_{\text{OTS\textdollar-real}}$ library:
 
 \begin{lstlisting}[mathescape=true, frame=single]
 	$L_{\text{hyb}_3}$:
@@ -198,9 +198,10 @@ other:
 	    return $c$
 \end{lstlisting}	
 
-This now allows to replace $m_l$ with $m_r$ in the $Eavesdrop()$ function,
-after which all steps above can be undone in reverse order, finally showing
-that $L^{\Sigma^2}_{\text{OTS}_L} \equiv L^{\Sigma^2}_{\text{OTS}_L}$. Hence
+As the output does not depend on the value passed to $CTXT'$ and $CTXT$
+anymore, we can replace $m_l$ with $m_r$ in the $Eavesdrop()$ function.
+Afterwards all steps above can be undone in reverse order, finally showing that
+$L^{\Sigma^2}_{\text{OTS}_L} \equiv L^{\Sigma^2}_{\text{OTS}_L}$. Hence
 $\Sigma^2$ satisfies one-time secrecy.
 
 \section{Negligible functions}
@@ -275,17 +276,19 @@ negligible.
 	polynomial function. We aim to show that $f \cdot g$ is negligible.
 
 	Note first that, if $f$ is negligible, the following holds for all
-	constants $c \in \mathbb{R}$, in particular for $c = 1$:
+	constants $c \in \mathbb{R}$, in particular also for $c = 1$:
 	\begin{align*}
 		& \lim_{\lambda \rightarrow \infty} p(\lambda) f(\lambda) = 0 \\
-		\Rightarrow & \lim_{\lambda \rightarrow \infty} c \cdot f(\lambda) = 0
+		\Rightarrow & \lim_{\lambda \rightarrow \infty} c \cdot f(\lambda) = 0 \\
+		\Rightarrow & \lim_{\lambda \rightarrow \infty} f(\lambda) = 0
 	\end{align*}
 
 	As such:
 	\begin{align*}
 		\lim_{\lambda \rightarrow \infty} p(\lambda) \cdot (f(\lambda) \cdot g(\lambda)) 
 		  & = \lim_{\lambda \rightarrow \infty} (p(\lambda) \cdot f(\lambda)) \cdot g(\lambda) & \text{Associativity of multiplication} \\
-		  & = \lim_{\lambda \rightarrow \infty} 0 \cdot 0 & \text{Negligibility of $f$ and $g$} \\
+		  & = \lim_{\lambda \rightarrow \infty} (p(\lambda) \cdot f(\lambda)) \cdot 0 & \text{Negligibility of $g$} \\
+		  & = \lim_{\lambda \rightarrow \infty} 0 \cdot 0 & \text{Negligibility of $f$} \\
 		  & = 0
 	\end{align*}
 
@@ -326,8 +329,54 @@ one would need $\SI{9.1e19}{hashes \per \second} / \SI{167}{hashes \per
 
 \section{A random cipher}
 
+\subsection{Formalizing $\Sigma$}
+
+ Let $n$ be the length of keys $\Sigma$ uses. Its algorithms can then be
+ formalized as:
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	$\Sigma.M := \{0, 1\}^k$
+	$\Sigma.C := \{0, 1\}^k$
+	$\Sigma.K := \{0, 1\}^n$
+
+	$\Sigma$.KeyGen():
+	  $k \leftarrow \Sigma.K$
+	  return k
+
+	$\Sigma.Enc$($k \in \Sigma.K$, $m \in \Sigma.M$):
+	  c := DO_SOMETHING_WITH_K_AND_M()
+	  return c
+
+	$\Sigma.Dec$($k \in \Sigma.K$, $c \in \Sigma.C$):
+	  m := DO_SOMETHING_WITH_K_AND_C()
+	  return m
+	
+\end{lstlisting}
 
 
+\subsection{Brute-forcing a message}
+
+If an adversary wants to brute-force a plaintext message $m \leftarrow \{0,
+1\}^k$, given $c := ENCRYPT(m)$, he can attempt doing so by picking random
+messages $m' \leftarrow \{0, 1\}^k$, calling $c' := ENCRYPT(m')$, and checking
+if $c' = c$. If so, $m' = m$.
+
+Let $n := 2^k$. For a single $m' <- \{0, 1\}^k$, the chance of $m \neq m'$ is
+given as  $P(m' \neq m) = \frac{n-1}{n}$. Asuming the adversary takes care not
+to try the same plaintext message multiple times, the probability of failure on
+the second attempt is $\frac{n - 2}{n - 1}$, and so on. For $q \leq n$ attempts
+this results in a probability of success as:
+
+\begin{align*}
+	1 - \frac{(n - 1) \cdot (n - 2) \cdots (n - q)}{n \cdot (n-1) \cdots (n - q + 1)} 
+	  & = 1 - \frac{(n-1)! \cdot (n - q)!}{(n - q - 1)! \cdot n!} \\
+	  & = 1 - \frac{n - q}{n} \\
+	  & = 1 - 1 - \frac{q}{n} \\
+	  & = \frac{q}{n}
+\end{align*}
+
+Hence, $\frac{q}{n}$ is an upper limit on the probability of the adversary
+guessing $m$ in $q$ attempts, if given $c$.
 
 \end{document}
 
