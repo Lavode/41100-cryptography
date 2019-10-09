@@ -375,8 +375,11 @@ this results in a probability of success as:
 	  & = \frac{q}{n}
 \end{align*}
 
-Hence, $\frac{q}{n}$ is an upper limit on the probability of the adversary
-guessing $m$ in $q$ attempts, if given $c$.
+Were the adversary to pick at random without excluding duplicates, the
+probability of success would instead be $1 - (1 - \frac{1}{n})^q <
+\frac{q}{n}$.
 
+Hence, $\frac{q}{n}$ is an upper limit on the probability of the adversary
+guessing $m$ in $q$ attempts, if given $c$ and access to $ENCRYPT(m \in M)$.
 \end{document}
 
