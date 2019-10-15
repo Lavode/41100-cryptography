@@ -1,0 +1,161 @@
+\documentclass[a4paper]{scrreprt}
+
+% Uncomment to optimize for double-sided printing.
+% \KOMAoptions{twoside}
+
+% Set binding correction manually, if known.
+% \KOMAoptions{BCOR=2cm}
+
+% Localization options
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Quotations
+\usepackage{dirtytalk}
+
+% Enhanced verbatim sections. We're mainly interested in
+% \verbatiminput though.
+\usepackage{verbatim}
+
+% PDF-compatible landscape mode.
+% Makes PDF viewers show the page rotated by 90°.
+\usepackage{pdflscape}
+
+% Advanced tables
+\usepackage{tabu}
+\usepackage{longtable}
+
+% Fancy tablerules
+\usepackage{booktabs}
+
+% Graphics
+\usepackage{graphicx}
+
+% Current time
+\usepackage[useregional=numeric]{datetime2}
+
+% Float barriers.
+% Automatically add a FloatBarrier to each \section
+\usepackage[section]{placeins}
+
+% Custom header and footer
+\usepackage{fancyhdr}
+
+\usepackage{geometry}
+\usepackage{layout}
+
+% Math tools
+\usepackage{mathtools}
+% Math symbols
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
+\pagestyle{plain}
+% \fancyhf{}
+% \lhead{}
+% \lfoot{}
+% \rfoot{}
+% 
+% Source code & highlighting
+\usepackage{listings}
+
+% SI units
+\usepackage[binary-units=true]{siunitx}
+\DeclareSIUnit\cycles{cycles}
+
+% Convenience commands
+\newcommand{\mailsubject}{41100 - Cryptography - Series 4}
+\newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
+                               {#1}}
+
+% Should use this command wherever the print date is mentioned.
+\newcommand{\printdate}{\today}
+
+\subject{41100 - Cryptography}
+\title{Series 4}
+
+\author{Michael Senn \maillink{michael.senn@students.unibe.ch} - 16-126-880}
+
+\date{\printdate}
+
+% Needs to be the last command in the preamble, for one reason or
+% another. 
+\usepackage{hyperref}
+
+
+\begin{document}
+\maketitle
+
+
+\setcounter{chapter}{3}
+\chapter{Series 4}
+
+\section{Deterministic libraries}
+
+\section{Hash-function collisions}
+
+Let $H: \{0, 1\}^{*} \Rightarrow \{0, 1\}^\lambda$ be an ideal hash function.
+
+\subsection{$\lambda = 40$}
+
+As the output of the hash function is uniformly distributed, the probability of
+a collision if computing $10^6$ hashes can be modeled with the generalized
+birthday problem:
+
+\[
+	\text{BirthdayProb}(10^6, 2^{40}) = 1 - \prod_{i = 1}^{10^6 - 1} \left(1 - \frac{1}{2^{40}}\right)
+\]
+
+As $10^6 \leq \sqrt(2) \cdot 2^{20} = \sqrt{2^{41}}$, we can calculate
+asymptotic bounds using the method mentioned in the book. As such, with $q :=
+10^6$ and $N := 2^{40}$:
+
+\begin{align*}
+	\SI{28.7}{\percent} & \approx 0.632 \cdot \frac{10^6 \cdot (10^6 - 1)}{2 \cdot 2^{40}} \\
+			    & = 0.632 \cdot \frac{q (q-1)}{2N}  \\
+			    & \leq BirthdayProb(q, N) \\ 
+			    & \leq \frac{10^6 \cdot (10^6 - 1)}{2 \cdot 2^{40}} \\
+			    & = \frac{q (q-1)}{2N}  \\
+			    & \approx \SI{45.5}{\percent}
+\end{align*}
+
+In addition to the lower bound of \SI{28.7}{\percent} and the upper bound of
+\SI{45.5}{\percent} we can calculate an approximate value using the first two
+terms of the taylor series of $\exp(x)$, as shown in the lecture:
+
+\[
+	\text{BirthdayProb}(q, N) \approx 1 - \exp(-\frac{q \cdot (q - 1)}{2
+	N}) \approx 1 - \exp(-\frac{q^2}{2 N}) \approx \SI{36.5}{\percent}
+\]
+
+\subsection{$\lambda = 256$}
+
+We solve the bounds above for $q$ using the approximation that $q \cdot (q-1)
+\approx q^2$ for big values of $q$. After discarding negative solutions this
+gives approximative bounds for $q$ as:
+
+
+\[
+	\sqrt{2 N p} \leq q \leq \sqrt{\frac{250}{79} N p}
+\]
+
+Similarly, for the approximate value:
+\begin{align*}
+	& p \approx \exp(- \frac{q^2}{2N}) \\
+	\Rightarrow & \exp(- \frac{q^2}{2N}) \approx 1 - p \\
+	\Rightarrow & -\frac{q^2}{2N} \approx \ln(1 - p) \\
+	\Rightarrow & q^2 \approx \ln(1 - p) \cdot 2N \\
+	\Rightarrow & q \approx \sqrt{\ln(1 - p) \cdot 2N}
+\end{align*}
+
+For $N := 2^{256}$, $p := 0.5$ this results in bounds of $3.40 * 10^{38} \leq q
+\leq 4.28 * 10^{38}$, and an approximate value of $q \approx 4.01 * 10^{38}$.
+
+
+\section{Salt}
+
+\end{document}
+
