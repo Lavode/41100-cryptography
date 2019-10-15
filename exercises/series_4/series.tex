@@ -95,6 +95,42 @@
 
 \section{Deterministic libraries}
 
+Let $L_1$, $L_2$ be two deterministic libraries. Let $OUTPUT(f, x_1, \cdots,
+x_n) := return f(x_1, \cdots, x_n)$ be a program which calls functions $f$ with
+parameters $x := (x_1 \cdots x_n)$ and returns the result, when linked to
+either $L_1$ or $L_2$.
+
+As the two libraries are deterministic $OUTPUT$ is deterministic as well,
+since its value is given by the choice of function $f$, and parameters $x$.
+
+As the libraries are finite and deterministic, and an adversary has access to
+the code of a library per Kerckhoff's principle, they can be analyzed in some
+finite amount of time. An adversary can learn if there is any function $f$
+which, when called with input $x_f$, produces two different outputs $y_1$ and
+$y_2$.
+
+If, for all functions $f$ and parameters $x_f$ the two libraries return the
+same result, they are interchangable as no distinguishing algorithm is able to
+differentiate the two.
+
+If however there is a function $f$ and a set of parameters $x_f$ such that $y_1
+:= OUTPUT(f, x) \diamond L_1) \neq OUTPUT(f, x) \diamond L_2) =: y_2$ then the
+adversary can use these to clearly differentiate between the two libraries:
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	f = ...
+	$x_f$ = ...
+	$y_1$ = ...
+	$y_2$ = ...
+
+	Differentiate():
+	  y = f(x)
+	  if y == $y_1$:
+	    return 1
+	  elsif y == $y_2$:
+	    return 0
+\end{lstlisting}
+
 \section{Hash-function collisions}
 
 Let $H: \{0, 1\}^{*} \Rightarrow \{0, 1\}^\lambda$ be an ideal hash function.
@@ -139,7 +175,7 @@ gives approximative bounds for $q$ as:
 
 
 \[
-	\sqrt{2 N p} \leq q \leq \sqrt{\frac{250}{79} N p}
+	\sqrt{2 N p} \leq q \leq \sqrt{\frac{250}{79} \cdot N p}
 \]
 
 Similarly, for the approximate value:
@@ -147,8 +183,8 @@ Similarly, for the approximate value:
 	& p \approx \exp(- \frac{q^2}{2N}) \\
 	\Rightarrow & \exp(- \frac{q^2}{2N}) \approx 1 - p \\
 	\Rightarrow & -\frac{q^2}{2N} \approx \ln(1 - p) \\
-	\Rightarrow & q^2 \approx \ln(1 - p) \cdot 2N \\
-	\Rightarrow & q \approx \sqrt{\ln(1 - p) \cdot 2N}
+	\Rightarrow & q^2 \approx -\ln(1 - p) \cdot 2N \\
+	\Rightarrow & q \approx \sqrt{-\ln(1 - p) \cdot 2N}
 \end{align*}
 
 For $N := 2^{256}$, $p := 0.5$ this results in bounds of $3.40 * 10^{38} \leq q
@@ -156,6 +192,28 @@ For $N := 2^{256}$, $p := 0.5$ this results in bounds of $3.40 * 10^{38} \leq q
 
 
 \section{Salt}
+
+Assuming that the used hashed function does not produce any collisions, the
+password database containing two equal hashes happens exactly if two users
+chose the same password. This can once more be understood as an instance of the
+birthday problem.
+
+\subsection{Password collisions}
+
+Let $p := 0.5$ and $N := 2^{20}$. Using the same approximations as above
+results in approximative bounds of $1024 \leq q \leq 1288$, and an approximate
+value of $q \approx 1206$.
+
+\subsection{Salting passwords}
+
+As the salt is appended to the password before hashing, passwords are uniformly
+distributed over $\{0, 1\}^{20}$ and salts are uniformly distributed over $\{0,
+1\}^{256}$, the resulting concatenation before hashing is uniformly distributed
+over $\{0, 1\}^{276}$.
+
+Using the same approximations as above results in approximative bounds of $3.48
+* 10^{41} \leq q \leq 4.38 * 10^{41}$, and an approximate value of $q \approx
+4.10 * 10^{41}$
 
 \end{document}
 
