@@ -100,22 +100,24 @@ x_n) := return f(x_1, \cdots, x_n)$ be a program which calls functions $f$ with
 parameters $x := (x_1 \cdots x_n)$ and returns the result, when linked to
 either $L_1$ or $L_2$.
 
-As the two libraries are deterministic $OUTPUT$ is deterministic as well,
-since its value is given by the choice of function $f$, and parameters $x$.
+As the two libraries are deterministic, $OUTPUT$ is deterministic as well since
+its value is given by the choice of function $f$, and parameters $x$.
 
 As the libraries are finite and deterministic, and an adversary has access to
 the code of a library per Kerckhoff's principle, they can be analyzed in some
 finite amount of time. An adversary can learn if there is any function $f$
 which, when called with input $x_f$, produces two different outputs $y_1$ and
-$y_2$.
+$y_2$. Such an analysis is independent of the actual attack later on, and has
+to be performed only once for any pair of libraries $L_1, L_2$.
 
 If, for all functions $f$ and parameters $x_f$ the two libraries return the
 same result, they are interchangable as no distinguishing algorithm is able to
 differentiate the two.
 
 If however there is a function $f$ and a set of parameters $x_f$ such that $y_1
-:= OUTPUT(f, x) \diamond L_1) \neq OUTPUT(f, x) \diamond L_2) =: y_2$ then the
-adversary can use these to clearly differentiate between the two libraries:
+:= OUTPUT(f, x) \diamond L_1) \neq OUTPUT(f, x) \diamond L_2 =: y_2$ then the
+adversary can use these to clearly differentiate between the two libraries
+using the distinguishing algorithm $A$:
 
 \begin{lstlisting}[mathescape=true, frame=single]
 	f = ...
@@ -131,6 +133,9 @@ adversary can use these to clearly differentiate between the two libraries:
 	    return 0
 \end{lstlisting}
 
+In this case $P[A \diamond L_1 \Rightarrow 1] - P[A \diamond L_2 \Rightarrow 1]
+= 1 - 0 = 1$, hence $A$ can distinguish the two libraries with advantage $1$.
+
 \section{Hash-function collisions}
 
 Let $H: \{0, 1\}^{*} \Rightarrow \{0, 1\}^\lambda$ be an ideal hash function.
@@ -145,16 +150,15 @@ birthday problem:
 	\text{BirthdayProb}(10^6, 2^{40}) = 1 - \prod_{i = 1}^{10^6 - 1} \left(1 - \frac{1}{2^{40}}\right)
 \]
 
-As $10^6 \leq \sqrt(2) \cdot 2^{20} = \sqrt{2^{41}}$, we can calculate
-asymptotic bounds using the method mentioned in the book. As such, with $q :=
-10^6$ and $N := 2^{40}$:
+Let $q := 10^6$, $N := 2^{40}$. As $q \leq \sqrt{2 N}$, we can calculate
+asymptotic bounds using the method mentioned in the book:
 
 \begin{align*}
 	\SI{28.7}{\percent} & \approx 0.632 \cdot \frac{10^6 \cdot (10^6 - 1)}{2 \cdot 2^{40}} \\
 			    & = 0.632 \cdot \frac{q (q-1)}{2N}  \\
 			    & \leq BirthdayProb(q, N) \\ 
-			    & \leq \frac{10^6 \cdot (10^6 - 1)}{2 \cdot 2^{40}} \\
-			    & = \frac{q (q-1)}{2N}  \\
+			    & \leq \frac{q (q-1)}{2N}  \\
+			    & = \frac{10^6 \cdot (10^6 - 1)}{2 \cdot 2^{40}} \\
 			    & \approx \SI{45.5}{\percent}
 \end{align*}
 
@@ -194,9 +198,9 @@ For $N := 2^{256}$, $p := 0.5$ this results in bounds of $3.40 * 10^{38} \leq q
 \section{Salt}
 
 Assuming that the used hashed function does not produce any collisions, the
-password database containing two equal hashes happens exactly if two users
-chose the same password. This can once more be understood as an instance of the
-birthday problem.
+password database contains two equal hashes exactly if two users chose the same
+password. This can once more be modeled as an instance of the birthday
+problem.
 
 \subsection{Password collisions}
 
