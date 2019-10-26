@@ -1,0 +1,160 @@
+\documentclass[a4paper]{scrreprt}
+
+% Uncomment to optimize for double-sided printing.
+% \KOMAoptions{twoside}
+
+% Set binding correction manually, if known.
+% \KOMAoptions{BCOR=2cm}
+
+% Localization options
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Quotations
+\usepackage{dirtytalk}
+
+% Enhanced verbatim sections. We're mainly interested in
+% \verbatiminput though.
+\usepackage{verbatim}
+
+% PDF-compatible landscape mode.
+% Makes PDF viewers show the page rotated by 90°.
+\usepackage{pdflscape}
+
+% Advanced tables
+\usepackage{tabu}
+\usepackage{longtable}
+
+% Fancy tablerules
+\usepackage{booktabs}
+
+% Graphics
+\usepackage{graphicx}
+
+% Current time
+\usepackage[useregional=numeric]{datetime2}
+
+% Float barriers.
+% Automatically add a FloatBarrier to each \section
+\usepackage[section]{placeins}
+
+% Custom header and footer
+\usepackage{fancyhdr}
+
+\usepackage{geometry}
+\usepackage{layout}
+
+% Math tools
+\usepackage{mathtools}
+% Math symbols
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
+% Indistinguishable operator (three stacked tildes)
+\newcommand*{\diffeo}{% 
+  \mathrel{\vcenter{\offinterlineskip
+  \hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}}}}
+
+\pagestyle{plain}
+% \fancyhf{}
+% \lhead{}
+% \lfoot{}
+% \rfoot{}
+% 
+% Source code & highlighting
+\usepackage{listings}
+
+% SI units
+\usepackage[binary-units=true]{siunitx}
+\DeclareSIUnit\cycles{cycles}
+
+% Convenience commands
+\newcommand{\mailsubject}{41100 - Cryptography - Series 5}
+\newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
+                               {#1}}
+
+% Should use this command wherever the print date is mentioned.
+\newcommand{\printdate}{\today}
+
+\subject{41100 - Cryptography}
+\title{Series 5}
+
+\author{Michael Senn \maillink{michael.senn@students.unibe.ch} - 16-126-880}
+
+\date{\printdate}
+
+% Needs to be the last command in the preamble, for one reason or
+% another. 
+\usepackage{hyperref}
+
+
+\begin{document}
+\maketitle
+
+
+\setcounter{chapter}{4}
+\chapter{Series 5}
+
+\section{A searching adversary}
+
+Let $G_y$ be the image of $G$, that is $G_y := \{G(s) : s \in \{0,
+1\}^\lambda\}$.
+
+Note that the distinguisher $A$ effectively iterates through all possible
+seeds, checking if at least one of them results in $x$ if used as seed for $G$.
+That is $A \rightarrow 1 \Leftrightarrow x \in G_y$.
+
+\subsection{Advantage of distinguisher $A$}
+
+By nature of its construction, $P[A \diamond L^G_{\text{PRG-real}} \rightarrow
+1] = 1$.
+
+When linked to $L^G_{\text{PRG-rand}}$, $A$ will return $1$ exactly if $x \in
+\{0, 1\}^{\lambda + l}$ is one of the $\abs{G_y} = 2^\lambda$ values produced
+by $G$. That is $P[A \diamond L^G_{\text{PRG-rand}} \rightarrow 1] =
+\frac{2^\lambda}{2^{\lambda + l}} = 2^{-l}$.
+
+As such the advantage is given as:
+\[
+	Adv_G = \abs*{P[A \diamond L^G_{\text{PRG-real}} - P[A \diamond L^G_{\text{PRG-rand}}} = 1 - 2^{-l} = \frac{2^l - 1}{2^l}
+\]
+
+As $Adv_G \neq 0$, as well as being independent of the security parameter
+$\lambda$, $\lim_{\lambda \rightarrow \infty}{Adv_G} \neq 0$, so the advantage
+is not negligible.
+
+\subsection{Status of $G$ as PRG}
+
+$G$ is a secure PRG if, for all polynomial distinguishers $A$:
+
+\[
+	L^G_{\text{PRG-real}} \diffeo L^G_{\text{PRG-rand}} \Leftrightarrow P[A \diamond L^G_{\text{PRG-real}} \rightarrow 1] \approx P[A \diamond L^G_{\text{PRG-rand}} \rightarrow 1]
+\]
+
+As the given $A$ searches through all $2^\lambda$ seeds, it is exponential
+rather than polynomial in $\lambda$. Hence this does not contradict the fact
+that $G$ is a secure PRG.
+
+\subsection{Advantage for non-injective $G$}
+
+If $G$ is not injective then $\exists\ s, s' \in \{0, 1\}^\lambda, s \neq s':
+G(s) = G(s')$. As such the cardinality of $G_y$ will be lower than if $G$ were
+injective.
+
+$P[A \diamond L^G_{\text{PRG-real}} \rightarrow 1]$ remains equal to $1$. $P[A
+\diamond L^G_{\text{PRG-rand}} \rightarrow 1]$ will be smaller, as $G_y <
+2^\lambda$. Hence the advantage of $A$ will be bigger for a non-injective $G$.
+
+\section{Lucky gambler}
+
+
+\section{PRGs}
+
+
+\section{PRG candidate}
+
+\end{document}
+
