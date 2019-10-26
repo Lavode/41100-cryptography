@@ -119,7 +119,7 @@ by $G$. That is $P[A \diamond L^G_{\text{PRG-rand}} \rightarrow 1] =
 
 As such the advantage is given as:
 \[
-	Adv_G = \abs*{P[A \diamond L^G_{\text{PRG-real}} - P[A \diamond L^G_{\text{PRG-rand}}} = 1 - 2^{-l} = \frac{2^l - 1}{2^l}
+	Adv_G = \abs*{P[A \diamond L^G_{\text{PRG-real}} \rightarrow 1] - P[A \diamond L^G_{\text{PRG-rand}} \rightarrow 1]} = 1 - 2^{-l} = \frac{2^l- 1}{2^l}
 \]
 
 As $Adv_G \neq 0$, as well as being independent of the security parameter
@@ -131,7 +131,9 @@ is not negligible.
 $G$ is a secure PRG if, for all polynomial distinguishers $A$:
 
 \[
-	L^G_{\text{PRG-real}} \diffeo L^G_{\text{PRG-rand}} \Leftrightarrow P[A \diamond L^G_{\text{PRG-real}} \rightarrow 1] \approx P[A \diamond L^G_{\text{PRG-rand}} \rightarrow 1]
+	L^G_{\text{PRG-real}} \diffeo L^G_{\text{PRG-rand}} \Leftrightarrow P[A
+	\diamond L^G_{\text{PRG-real}} \rightarrow 1] \approx P[A \diamond
+	L^G_{\text{PRG-rand}} \rightarrow 1]
 \]
 
 As the given $A$ searches through all $2^\lambda$ seeds, it is exponential
@@ -145,10 +147,39 @@ G(s) = G(s')$. As such the cardinality of $G_y$ will be lower than if $G$ were
 injective.
 
 $P[A \diamond L^G_{\text{PRG-real}} \rightarrow 1]$ remains equal to $1$. $P[A
-\diamond L^G_{\text{PRG-rand}} \rightarrow 1]$ will be smaller, as $G_y <
+\diamond L^G_{\text{PRG-rand}} \rightarrow 1]$ will be smaller, as $\abs{G_y} <
 2^\lambda$. Hence the advantage of $A$ will be bigger for a non-injective $G$.
 
 \section{Lucky gambler}
+
+As above, let $G_y$ be the image of $G$.
+
+If $A$ is linked to $L^G_{\text{PRG-Real}}$, then $x \in G_y, G(s) \in G_y$. Hence:
+
+\[
+	P[A \diamond L^G_{\text{PRG-Real}} \rightarrow 1] = P[x = G(s)] = \frac{1}{\abs{G_y}} = 2^{-\lambda}
+\]
+
+If $A$ is linked to $L^G_{\text{PRG-Rand}}$, then $x \in \{0, 1\}^{\lambda + l}, G(s) \in G_y$. Hence:
+
+\begin{align*}
+	& P[x \in G_y] = \frac{2^\lambda}{2^{\lambda + l}} = 2^{-l} \\
+	& P[A \diamond L^G_{\text{PRG-Rand}} \rightarrow 1 | x \not \in G_y] = 0 \\
+	& P[A \diamond L^G_{\text{PRG-Rand}} \rightarrow 1 | x \in G_y] = 2^{-\lambda} \\
+	\Rightarrow & P[A \diamond L^G_{\text{PRG-Rand}} \rightarrow 1] = 2^{-l} \cdot 2^{-\lambda} = 2^{-\lambda - l}
+\end{align*}
+
+As such the advantage $Adv_G$ is:
+
+\[
+	Adv_G = \abs*{P[A \diamond L^G_{\text{PRG-real}} \rightarrow 1] - P[A \diamond L^G_{\text{PRG-rand}} \rightarrow 1]} = 2^{-\lambda - l}
+\]
+
+As $l$ is a constant, this is clearly negligible, since:
+
+\[
+	\lim_{\lambda \rightarrow \infty}{Adv_G} = \lim_{\lambda \rightarrow \infty}{2^{-\lambda -l}} = 0
+\]
 
 
 \section{PRGs}
