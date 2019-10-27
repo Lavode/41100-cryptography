@@ -184,8 +184,329 @@ As $l$ is a constant, this is clearly negligible, since:
 
 \section{PRGs}
 
+\subsection{$A(s)$}
+
+Consider the following sequence of operations on the given program.
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	A(s):
+	  x || y || z := G(s)
+	  return G(x) || G(z)
+\end{lstlisting}
+
+By definition the seed $s$ has to be chosen uniformally from $\{0,
+1\}^\lambda$. Inlining its definition and extracting calls to $\text{QUERY}_G$
+as used in claim 5.6 of the book yields the following program linked to
+$L^G_{\text{PRG-real}}$:
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	A(s):
+	  x || y || z := $\text{QUERY}_G$
+	  return G(x) || G(z)
+
+	$\diamond$
+
+	$L^G_{\text{PRG-real}}$:
+	  $\text{QUERY}_G$:
+	    s <- {0, 1}$^\lambda$
+	    return G(s)
+\end{lstlisting}
+
+As $G$ is a secure PRG $L^G_{\text{PRG-real}}$ can be replaced with $L^G_{\text{PRG-rand}}$:
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	A_2(s):
+	  x || y || z := $\text{QUERY}_G$
+	  return G(x) || G(z)
+
+	$\diamond$
+
+	$L^G_{\text{PRG-rand}}$:
+	  $\text{QUERY}_G$:
+	    x <- {0, 1}$^{3\lambda}$
+	    return G(s)
+\end{lstlisting}
+
+Inlining the library yields:
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	A_3(s):
+	  x <- {0, 1}$^{3\lambda}$
+	  y <- {0, 1}$^{3\lambda}$
+	  z <- {0, 1}$^{3\lambda}$
+	  return x || z
+\end{lstlisting}
+
+Finally removing unused variables, and using the fact that choosing $2 x$
+uniform bits is equivalent to independently choosing and concatenating $x$
+uniform bits twice yields:
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	A_4(s):
+	  x <- {0, 1}$^{6\lambda}$
+	  return x
+\end{lstlisting}
+
+Hence we arrived at an indistinguishable implementation of $A$ where the output
+is uniformly distributed over $\{0, 1\}^{6 \lambda}$. As such $A$ is a secure
+PRG.
+
+\subsection{$B(s)$}
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	B(s):
+	  x || y || z = G(s)
+	  return x || y
+\end{lstlisting}
+
+As above we can extract the calls to $G$ into a separate library.
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	B_2(s):
+	  x || y || z = $\text{QUERY}_G$
+	  return x || y
+
+	$\diamond$
+
+	$L^G_{\text{PRG-real}}$:
+	  $\text{QUERY}_G$:
+	    s <- {0, 1}$^\lambda$
+	    return G(s)
+\end{lstlisting}
+
+We can then replace $G_{\text{PRG-real}}$ with $G_{\text{PRG-rand}}$, and
+inline the call again:
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	B_3(s):
+	  x || y || z <- {0, 1}$^{3 \lambda}$
+	  return x || y
+\end{lstlisting}
+
+And finally split choosing one uniform $3n$ bit string into independently
+choosing three uniform $n$ bit strings, discarding one and combining the
+remaining two into choosing one uniform $2n$ bit string.
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	B_4(s):
+	  x <- {0, 1}$^{2 \lambda}$
+	  return x
+\end{lstlisting}
+
+Hence $B$ is a secure PRG as well.
+
+\subsection{$C(s)$}
+
+Consider the following distinguisher:
+\begin{lstlisting}[mathescape=true, frame=single]
+	A:
+	  x || y := QUERY()
+	  return x == y
+\end{lstlisting}
+
+As per its construction: 
+\[
+	P[A \diamond L_{\text{PRG-real}} \rightarrow 1] = 1
+\]
+
+And, with $x, y$ uniform $3 \lambda$ bit strings:
+\[
+	P[A \diamond L_{\text{PRG-rand}} \rightarrow 1] = P[x = y] = 2^{-3 \lambda}
+\]
+
+Hence the limit of the advantage is:
+\[
+	\lim_{\lambda \to \infty} Adv_G = \lim_{\lambda \to \infty} 1 - 2^{-3 \lambda} = 1
+\]
+
+As such it is not negligible, and $C$ not a secure PRG.
+
+\subsection{$D(s)$}
+
+Consider the following distinguisher:
+\begin{lstlisting}[mathescape=true, frame=single]
+	A:
+	  x || y := QUERY()
+	  return y == G($0^\lambda$)
+\end{lstlisting}
+
+As per its construction: 
+\[
+	P[A \diamond L_{\text{PRG-real}} \rightarrow 1] = 1
+\]
+
+And, with $x, y$ uniform $3 \lambda$ bit strings:
+\[
+	P[A \diamond L_{\text{PRG-rand}} \rightarrow 1] = P[y = G(0^\lambda)] = 2^{-3 \lambda}
+\]
+
+Hence the limit of the advantage is:
+\[
+	\lim_{\lambda \to \infty} Adv_G = \lim_{\lambda \to \infty} 1 - 2^{-3 \lambda} = 1
+\]
+
+As such it is not negligible, and $C$ not a secure PRG.
+
+\subsection{$E(s)$}
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	E(s):
+	  x = G(s)
+	  y = G($0^\lambda$)
+	  return $x \oplus y$
+\end{lstlisting}
+
+As $G$ is a secure PRG $x$ is indistinguishable from a uniformly chosen $3
+\lambda$ bit string. $y = G(0^\lambda)$ meanwhile is a $3 \lambda$ bit constant.
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	E_2(s):
+	  x <- {0, 1}$^{3 \lambda}$
+	  y = G($0^\lambda$)
+	  return $x \oplus y$
+\end{lstlisting}
+
+As shown earlier in the lecture, the result of a uniform $n$ bit random
+variable XOR-ed with another $n$ bit variable is a uniform $n$ bit random
+variable too.
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	E_3(s):
+	  x <- {0, 1}$^{3 \lambda}$
+	  return x
+\end{lstlisting}
+
+Hence $E$ is a secure PRG.
+
+\subsection{$F(s_L || s_R)$}
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	F($s_L, s_R$):
+	  x = G($s_L$)
+	  y = G($s_R$)
+	  return $x \oplus y$
+\end{lstlisting}
+
+As $G$ is a secure PRG, $x$ and $y$ can not be distinguished from uniformly
+chosen $3 \lambda$ bit strings:
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	F($s_L, s_R$):
+	  x <- {0, 1}$^{3 \lambda}$
+	  y <- {0, 1}$^{3 \lambda}$
+	  return $x \oplus y$
+\end{lstlisting}
+
+As above the XOR-ed result of two uniformly distributed $n$ bit strings is
+uniformly distributed as well:
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	F_2($s_L, s_R$):
+	  x <- {0, 1}$^{3 \lambda}$
+	  return x
+\end{lstlisting}
+
+Hence $F$ is a secure PRG.
+
+\subsection{$H(s_L || s_R)$}
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	H($s_L, s_R$):
+	  x = G($s_L$)
+	  y = G($s_R$)
+	  return x || y
+\end{lstlisting}
+
+Once more, as $G$ is a secure PRG, $x$ and $y$ can not be distinguished from
+uniformly chosen $3 \lambda$ bit strings:
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	H($s_L, s_R$):
+	  x <- {0, 1}$^{3 \lambda}$
+	  y <- {0, 1}$^{3 \lambda}$
+	  return x || y
+\end{lstlisting}
+
+Choosing and concatenating two uniform $3 \lambda$ bit strings is equivalent to
+choosing one uniform $6 \lambda$ bit string:
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	H_2($s_L, s_R$):
+	  x <- {0, 1}$^{6 \lambda}$
+	  return x
+\end{lstlisting}
+
+Hence $H$ is a secure PRG.
 
 \section{PRG candidate}
 
+\subsection{$s || f(s)$}
+
+Consider the following distinguisher:
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	A:
+	  s, x := QUERY()
+	  return f(s) == x
+\end{lstlisting}
+
+By nature of the construction of the candidate PRG, $P[A \diamond
+L_{\text{PRG-real}} \rightarrow 1] = 1$, as the returned pseudo-random variable
+fulfills $x = f(s)$.
+
+Further it can be shown that, for two unknown uniformly-distributed values of
+$s$ and $x$, $P[f(s) = x] = s^{-l}$ holds for any function $f$. As such:
+
+\[
+	P[A \diamond L^G_{\text{PRG-Rand}} \rightarrow 1] = P[x = f(s)] = 2^{-l}
+\]
+
+Hence the advantage is:
+\[
+	Adv_G = \abs*{P[A \diamond L^G_{\text{PRG-real}} \rightarrow 1] - P[A \diamond L^G_{\text{PRG-rand}} \rightarrow 1]} = 1 - 2^{-l}
+\]
+
+Since $l$ is a constant, $\lim_{\lambda \rightarrow \infty} Adv_G = 1 - 2^{-l}
+> 0$, so is not negligible, hence the candidate PRG is not secure.
+
+\subsection{$P[V(G(s)) = s] > negl(\lambda)$}
+
+Consider the following distinguisher:
+
+\begin{lstlisting}[mathescape=true, frame=single]
+	A:
+	  x := QUERY()
+	  s' := V(x)
+	  return G(s') == x
+\end{lstlisting}
+
+As per the exercise $P[V(G(s)) = s] > negl(\lambda) \forall s$, hence:
+\[
+	P[A \diamond L_{\text{PRG-real}} \rightarrow 1] > negl(\lambda)
+\]
+
+If $A$ is linked to $L_{\text{PRG-rand}}$, then $s'$ will be some value within
+$\{0, 1\}^\lambda$, $x$ a random value within $\{0, 1\}^{\lambda + l}$. For any
+$x$ in the image of $G$, $P[G(s') = x] > negl(\lambda)$. For any $x$ not in the
+image of $G$, $P[G(s') = x] = 0$. Hence:
+
+\[
+	P[A \diamond L_{\text{PRG-rand}} \rightarrow 1] > \frac{2^\lambda}{2^{\lambda + l}} \cdot negl(\lambda) = 2^{-l} \cdot negl(\lambda)
+\]
+
+Note that $0 < \lim_{\lambda \rightarrow \infty} negl(\lambda) \leq 1$. As $l >
+0$ is constant let $c := 1 - 2^{-l}$ with $0 < c < 1$. The advantage is then
+bounded by:
+
+\[
+	Adv_G > \abs*{negl(\lambda) - 2^{-l} \cdot negl(\lambda)} = \abs*{negl(\lambda) \cdot c} > 0
+\]
+
+And hence the advantage is not negligible:
+\[
+	\lim_{\lambda \to \infty} Adv_G > \lim_{\lambda \to \infty}(negl(\lambda)) \cdot c > 0
+\]
+
 \end{document}
+
 
