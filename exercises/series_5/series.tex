@@ -172,13 +172,13 @@ If $A$ is linked to $L^G_{\text{PRG-Rand}}$, then $x \in \{0, 1\}^{\lambda + l},
 As such the advantage $Adv_G$ is:
 
 \[
-	Adv_G = \abs*{P[A \diamond L^G_{\text{PRG-real}} \rightarrow 1] - P[A \diamond L^G_{\text{PRG-rand}} \rightarrow 1]} = 2^{-\lambda - l}
+	Adv_G = \abs*{P[A \diamond L^G_{\text{PRG-real}} \rightarrow 1] - P[A \diamond L^G_{\text{PRG-rand}} \rightarrow 1]} = 2^{-l} - 2^{-\lambda - l} = \frac{2^l - 1}{2^{\lambda +l}}
 \]
 
 As $l$ is a constant, this is clearly negligible, since:
 
 \[
-	\lim_{\lambda \rightarrow \infty}{Adv_G} = \lim_{\lambda \rightarrow \infty}{2^{-\lambda -l}} = 0
+	\lim_{\lambda \rightarrow \infty}{Adv_G} = \lim_{\lambda \rightarrow \infty}{\frac{2^l - 1}{2^{\lambda +l}}} = \lim_{\lambda \rightarrow \infty}{\frac{1}{2^{\lambda}}} = 0
 \]
 
 
@@ -224,7 +224,7 @@ As $G$ is a secure PRG $L^G_{\text{PRG-real}}$ can be replaced with $L^G_{\text{
 	$L^G_{\text{PRG-rand}}$:
 	  $\text{QUERY}_G$:
 	    x <- {0, 1}$^{3\lambda}$
-	    return G(s)
+	    return x
 \end{lstlisting}
 
 Inlining the library yields:
@@ -283,9 +283,10 @@ inline the call again:
 	  return x || y
 \end{lstlisting}
 
-And finally split choosing one uniform $3n$ bit string into independently
-choosing three uniform $n$ bit strings, discarding one and combining the
-remaining two into choosing one uniform $2n$ bit string.
+We then replace the choosing of one $3n$ bit string with the independent
+choosing of three $n$ bit strings. Removing the unused variable, and combining
+the two concatenated $n$ bit strings into one $2n$ bit string yields the
+program below.
 
 \begin{lstlisting}[mathescape=true, frame=single]
 	B_4(s):
