@@ -1,0 +1,265 @@
+\documentclass[a4paper]{scrreprt}
+
+% Uncomment to optimize for double-sided printing.
+% \KOMAoptions{twoside}
+
+% Set binding correction manually, if known.
+% \KOMAoptions{BCOR=2cm}
+
+% Localization options
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Quotations
+\usepackage{dirtytalk}
+
+% Enhanced verbatim sections. We're mainly interested in
+% \verbatiminput though.
+\usepackage{verbatim}
+
+% PDF-compatible landscape mode.
+% Makes PDF viewers show the page rotated by 90°.
+\usepackage{pdflscape}
+
+% Advanced tables
+\usepackage{tabu}
+\usepackage{longtable}
+
+% Fancy tablerules
+\usepackage{booktabs}
+
+% Graphics
+\usepackage{graphicx}
+
+% Current time
+\usepackage[useregional=numeric]{datetime2}
+
+% Float barriers.
+% Automatically add a FloatBarrier to each \section
+\usepackage[section]{placeins}
+
+% Custom header and footer
+\usepackage{fancyhdr}
+
+\usepackage{geometry}
+\usepackage{layout}
+
+% Math tools
+\usepackage{mathtools}
+% Math symbols
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
+% Indistinguishable operator (three stacked tildes)
+\newcommand*{\diffeo}{% 
+  \mathrel{\vcenter{\offinterlineskip
+  \hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}}}}
+
+\pagestyle{plain}
+% \fancyhf{}
+% \lhead{}
+% \lfoot{}
+% \rfoot{}
+% 
+% Source code & highlighting
+\usepackage{listings}
+
+% Coloured boxes!
+\usepackage[most]{tcolorbox}
+\newtcolorbox{library}[2][]{
+	enhanced,
+	sharp corners,
+	coltitle=black, % title colour
+	colbacktitle=black!10!white, % title bg colour
+	halign title=center, % title align
+	toptitle=1mm, % Top/bottom additional spacing for title
+	bottomtitle=1mm,
+	fonttitle=\ttfamily,
+	colback=white, % body bg colour
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+\newtcolorbox{boxcomment}[2][]{
+	enhanced,
+	colframe=white, % frame colour
+	colbacktitle=white, % title bg colour
+	halign=center, % body align
+	colback=white, % body bg colour
+	fonttitle=\ttfamily,
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+% SI units
+\usepackage[binary-units=true]{siunitx}
+\DeclareSIUnit\cycles{cycles}
+
+% Convenience commands
+\newcommand{\mailsubject}{41100 - Cryptography - Series 6}
+\newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
+                               {#1}}
+
+% Should use this command wherever the print date is mentioned.
+\newcommand{\printdate}{\today}
+
+\subject{41100 - Cryptography}
+\title{Series 6}
+
+\author{Michael Senn \maillink{michael.senn@students.unibe.ch} - 16-126-880}
+
+\date{\printdate}
+
+% Needs to be the last command in the preamble, for one reason or
+% another. 
+\usepackage{hyperref}
+
+
+\begin{document}
+\maketitle
+
+
+\setcounter{chapter}{5}
+\chapter{Series 6}
+
+\section{Distinction between PRGs}
+
+Let $G_1, G_2$ be secure PRGs with output length $\lambda + l$. As $G_1$ is a
+secure PRG, its output is indistinguishable from a uniform distribution on
+$\{0, 1\}^{\lambda +l}$. Hence the two following libraries are
+indistingushable.
+
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L^{G_1}_{\text{which-PRG}}$}
+		\begin{lstlisting}[mathescape=true]
+QUERY():
+  $s \leftarrow \{0, 1\}^\lambda$
+  return $G_1(s)$
+		  \end{lstlisting}
+	\end{library}
+	\begin{library}{$L^{G}_{\text{rand}}$}
+		\begin{lstlisting}[mathescape=true]
+QUERY():
+  $x \leftarrow \{0, 1\}^{\lambda + l}$
+  return x
+  		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+Similarly the following two libraries are indistinguishable as well:
+
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L^{G_2}_{\text{which-PRG}}$}
+		\begin{lstlisting}[mathescape=true]
+QUERY():
+  $s \leftarrow \{0, 1\}^\lambda$
+  return $G_2(s)$
+		  \end{lstlisting}
+	\end{library}
+	\begin{library}{$L^{G}_{\text{rand}}$}
+		\begin{lstlisting}[mathescape=true]
+QUERY():
+  $x \leftarrow \{0, 1\}^{\lambda + l}$
+  return x
+  		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+Due to the transitivity of $\diffeo$, $L^{G_1}_{\text{which-PRG}} \diffeo
+L^{G}_{\text{rand}} \diffeo L^{G_2}_{\text{which-PRG}}$. It follows that the
+two given libraries can not be distinguished.
+
+\section{Find the key}
+
+Let $F$ be a candidate PRF with input length $i$ and output length $o$. Let $A$
+be an algorithm able to guess $k$ with non-negligible probability. Let $Y_F(k)$
+be the non-unique (in case $F$ is not injective) set of possible outputs of $F$
+if initialized with key $k$. Note that its cardinality is limited by the set of
+inputs for F: $\abs{Y_F(k)} = 2^i$.
+
+Consider the following distinguisher:
+
+\begin{library}{$B()$}
+	\begin{lstlisting}[mathescape=true]
+k' := A()
+$c \leftarrow \{0, 1\}^i$
+x := LOOKUP(c)
+return x == F(k', c)
+	\end{lstlisting}
+\end{library}
+
+If linked to $L^{F'}_{\text{PRF-real}}$, $A()$ has a non-negligible likelihood
+$p$ of guessing the correct key. If the correct key is guessed, $P[B \diamond
+L^{F'}_{\text{PRF-real}} \rightarrow 1 | k \text{ correct}] = 1$. If the wrong
+key is guessed, the output of $F(k', c)$ is indistinguishable from a uniform
+distribution on $Y_F(k')$, hence $P[B \diamond L^{F'}_{\text{PRF-real}}
+\rightarrow 1 | k \text{ incorrect}] = 2^{-i}$. As such:
+
+\begin{align*}
+	P[B \diamond L^{F'}_{\text{PRF-real}} \rightarrow 1] & = P[A \text{ guesses correctly}] \cdot 1 + P[A \text{ guesses incorrectly}] \cdot 2^{-i} \\
+							     & = p + (1 - p) \cdot 2^{-i}
+\end{align*}
+
+If linked to $L^{F'}_{\text{PRF-rand}}$, $x$ will be uniformly distributed on
+$\{0, 1\}^o$. $B()$ will return $1$ if $x$ is a valid output of $F$ with key
+$k'$, and $x = F(k', c)$:
+
+\begin{align*}
+	P[B \diamond L^{F'}_{\text{PRF-rand}} \rightarrow 1] & = P[x \in F_Y(k')] \cdot P[x = F(k', c)] \\
+							     & = \frac{2^i}{2^o} \cdot \frac{1}{2^i} \\
+							     & = 2^{-o}
+\end{align*}
+
+As such the advantage is given as:
+\[
+	bias(B) = \abs{p + (1 - p) \cdot 2^{-i} - 2^{-o}}
+\]
+
+\newpage
+
+\section{Build a distinguisher}
+
+Let $F$ be a secure PRF with input length $i$ and output length $o$. Consider
+the following distinguisher:
+
+\begin{library}{$B()$}
+	\begin{lstlisting}[mathescape=true]
+$x_1 := 0^i$
+$x_2 := 1^i$
+
+$y_{1, 1}$ || $y_{1, 2}$ := LOOKUP($x_1$)
+$y_{2, 1}$ || $y_{2, 2}$ := LOOKUP($x_2$)
+
+return $y_{1, 1}$ || $y_{1, 2}$ == $y_{2, 2}$ || $y_{2, 1}$
+	\end{lstlisting}
+\end{library}
+
+As $x_2 = \overline{x_1} = \overline{\overline{x_2}}$, $F'(k, x) = F(k, x) ||
+F(k, \overline{x})$, and $F'(k, \overline{x}) = F(k, \overline{x}) || F(k,
+\overline{\overline{x}}) = F(k, \overline{x}) || F(k, x)$. Hence, if linked to
+the library calling $F'$:
+
+\begin{align*}
+	P[A \diamond L^{F'}_{\text{PRF-real}} \rightarrow 1] = 1
+\end{align*}
+
+If linked to the library sampling uniformly from $\{0, 1\}^o$, as $o \geq 1$:
+
+\begin{align*}
+	P[A \diamond L^{F'}_{\text{PRF-rand}} \rightarrow 1] & = P[y_{1, 1} || y_{1, 2} = y_{2, 2} || y_{2, 1}] = 2^{-2 o} \\
+	& < \frac{1}{4}
+\end{align*}
+
+As such the advantage is given as:
+\[
+	bias(B) \geq 1 - \frac{1}{4} = \frac{3}{4}
+\]
+
+Which is clearly not negligible, so $F'$ is not a secure PRF.
+
+\end{document}
+
+
