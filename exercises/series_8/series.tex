@@ -304,6 +304,134 @@ so the encryption scheme does not possess CPA-security.
 
 \subsubsection{CPA security}
 
+Consider the following sequence of hybrid libraries, starting with
+$L^{\Sigma}_{\text{CPA\$-Real}}$.
+
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L^{\Sigma}_{\text{CPA\$-Real}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			$k \leftarrow \{0, 1\}^\lambda$
+			CTXT($m$):
+			  if $\abs{m_l} \neq \abs{m_r}$:
+			    error
+			  return $\Sigma.enc(k, m)$
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$\Sigma$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			Enc(k, m):
+			  $r \leftarrow \{0, 1\}^\lambda$
+			  $s := r \oplus m$
+			  $x = F(k, r)$
+			  return (s, x)
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+As, by nature of being a secure PRP, $F$ is also a secure $PRF$, extracting
+$L^{F}_{\text{PRF-real}}$:
+
+\begin{tcbraster}[raster columns=3,raster equal height,nobeforeafter,raster column skip=0.2cm]
+	\begin{library}{$L^{\Sigma}_{\text{CPA\$-Real}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			CTXT($m$):
+			  if $\abs{m_l} \neq \abs{m_r}$:
+			    error
+			  return $\Sigma.enc(k, m)$
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$\Sigma$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			Enc(k, m):
+			  $r \leftarrow \{0, 1\}^\lambda$
+			  $s := r \oplus m$
+			  $x := LOOKUP(r)$
+			  return (s, x)
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$L^{F}_{\text{PRF-real}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			$k \leftarrow \{0, 1\}^\lambda$
+			LOOKUP(m):
+			  return F(k, x)
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+As $F$ is a secure PRF:
+
+\begin{tcbraster}[raster columns=3,raster equal height,nobeforeafter,raster column skip=0.2cm]
+	\begin{library}{$L^{\Sigma}_{\text{CPA\$-Real}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			CTXT($m$):
+			  if $\abs{m_l} \neq \abs{m_r}$:
+			    error
+			  return $\Sigma.enc(k, m)$
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$\Sigma$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			Enc(k, m):
+			  $r \leftarrow \{0, 1\}^\lambda$
+			  $s := r \oplus m$
+			  $x := LOOKUP(r)$
+			  return (s, x)
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$L^{F}_{\text{PRF-rand}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			T := {}
+			LOOKUP(m):
+			  if m not in T:
+			    $T[m] \leftarrow \{0, 1\}^\lambda$
+			  return T[m]
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+As a polynomial-time attacker can at most query $LOOKUP()$ polyonomial times,
+selecting from $\{0, 1\}^\lambda$ without collision can not be distinguished
+from selecting from the same set with collisions, as demonstrated in the
+lecture. Inlining that code then yields:
+
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L^{\Sigma}_{\text{CPA\$-Real}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			CTXT($m$):
+			  if $\abs{m_l} \neq \abs{m_r}$:
+			    error
+			  return $\Sigma.enc(k, m)$
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$\Sigma'$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			Enc(k, m):
+			  $r \leftarrow \{0, 1\}^\lambda$
+			  $s := r \oplus m$
+			  $x \leftarrow \{0, 1\}^\lambda$
+			  return (s, x)
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+Finally using the fact that the XOR of two binary strings, one of which is
+chosen from a uniform distribution, follows a uniforml distribution once more,
+and inlining the resulting code:
+
+\begin{library}{$L^{\Sigma}_{\text{CPA\$-Rand}}$}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		CTXT($m$):
+		  if $\abs{m_l} \neq \abs{m_r}$:
+		    error
+		  $s \leftarrow \{0, 1\}^\lambda$
+		  $x \leftarrow \{0, 1\}^\lambda$
+		  return (s, x)
+	\end{lstlisting}
+\end{library}
+
+This library finally returns two randomly values chosen from a uniform
+distribution.  As such the encryption scheme possesses CPA\$ security.
+
 
 \subsection{c)}
 
