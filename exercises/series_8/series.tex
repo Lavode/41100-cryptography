@@ -1,0 +1,359 @@
+\documentclass[a4paper]{scrreprt}
+
+% Uncomment to optimize for double-sided printing.
+% \KOMAoptions{twoside}
+
+% Set binding correction manually, if known.
+% \KOMAoptions{BCOR=2cm}
+
+% Localization options
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Quotations
+\usepackage{dirtytalk}
+
+% Enhanced verbatim sections. We're mainly interested in
+% \verbatiminput though.
+\usepackage{verbatim}
+
+% Automatically remove leading whitespace in lstlisting
+\usepackage{lstautogobble}
+
+% PDF-compatible landscape mode.
+% Makes PDF viewers show the page rotated by 90°.
+\usepackage{pdflscape}
+
+% Advanced tables
+\usepackage{tabu}
+\usepackage{longtable}
+
+% Fancy tablerules
+\usepackage{booktabs}
+
+% Graphics
+\usepackage{graphicx}
+
+% Current time
+\usepackage[useregional=numeric]{datetime2}
+
+% Float barriers.
+% Automatically add a FloatBarrier to each \section
+\usepackage[section]{placeins}
+
+% Custom header and footer
+\usepackage{fancyhdr}
+
+\usepackage{geometry}
+\usepackage{layout}
+
+% Math tools
+\usepackage{mathtools}
+% Math symbols
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
+% Indistinguishable operator (three stacked tildes)
+\newcommand*{\diffeo}{% 
+  \mathrel{\vcenter{\offinterlineskip
+  \hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}}}}
+
+\pagestyle{plain}
+% \fancyhf{}
+% \lhead{}
+% \lfoot{}
+% \rfoot{}
+% 
+% Source code & highlighting
+\usepackage{listings}
+
+% Coloured boxes!
+\usepackage[most]{tcolorbox}
+\newtcolorbox{library}[2][]{
+	enhanced,
+	sharp corners,
+	coltitle=black, % title colour
+	colbacktitle=black!10!white, % title bg colour
+	halign title=center, % title align
+	toptitle=1mm, % Top/bottom additional spacing for title
+	bottomtitle=1mm,
+	fonttitle=\ttfamily,
+	colback=white, % body bg colour
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+\newtcolorbox{boxcomment}[2][]{
+	enhanced,
+	colframe=white, % frame colour
+	colbacktitle=white, % title bg colour
+	halign=center, % body align
+	colback=white, % body bg colour
+	fonttitle=\ttfamily,
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+% SI units
+\usepackage[binary-units=true]{siunitx}
+\DeclareSIUnit\cycles{cycles}
+
+% Convenience commands
+\newcommand{\mailsubject}{41100 - Cryptography - Series 8}
+\newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
+                               {#1}}
+
+% Should use this command wherever the print date is mentioned.
+\newcommand{\printdate}{\today}
+
+\subject{41100 - Cryptography}
+\title{Series 8}
+
+\author{Michael Senn \maillink{michael.senn@students.unibe.ch} - 16-126-880}
+
+\date{\printdate}
+
+% Needs to be the last command in the preamble, for one reason or
+% another. 
+\usepackage{hyperref}
+
+
+\begin{document}
+\maketitle
+
+
+\setcounter{chapter}{7}
+\chapter{Series 8}
+
+Let $\Sigma := \{0, 1\}$.
+
+\section{CPA-secure encryption?}
+
+Let $\Sigma$ be an encryption scheme with CPS-\$ security. Let $\Sigma'$ be an
+encryption scheme with $\Sigma'.Enc(k, m) := 00 || \Sigma.enc(k, m)$.
+
+\subsection{CPA\$ security}
+
+$\Sigma'$ does not posess CPA-\$ security.
+
+\begin{proof}
+	Consider the following distinguisher
+
+	\begin{library}{$B$}
+		\begin{lstlisting}[mathescape=true]
+$m \leftarrow \Sigma^l$
+# $c_i$ individual bits of output
+$c_1 || c_2 || c_3 || \cdots || c_l = CTXT(m)$
+
+return $c_1$ == 0 && $c_2$ == 0
+		\end{lstlisting}
+	\end{library}
+
+	Clearly by its construction:
+	\[
+		P[B \diamond L^\Sigma_{\text{CPA\$-real}} \rightarrow 1] = 1
+	\]
+
+	Further:
+	\[
+		P[B \diamond L^\Sigma_{\text{CPA\$-rand}} \rightarrow 1] = P[c_1 = c_2 = 0] = \frac{1}{4}
+	\]
+
+	As such:
+	\[
+		\lim_{\lambda \to \infty} Bias(B) = 1 - \frac{1}{4} = \frac{3}{4} \neq 0
+	\]
+
+	Which is not negligible, hence $\Sigma'$ does not possess CPA\$ security.
+\end{proof}
+
+
+\subsection{CPA security}
+
+Consider the following pairs of linked libraries.
+
+Starting with $L^{\Sigma'}_{\text{CPA-Left}}$:
+\begin{library}{$L^{\Sigma'}_{\text{CPA-Left}}$}
+	\begin{lstlisting}[mathescape=true]
+$k \leftarrow \{0, 1\}^\lambda$
+EAVESDROP($m_l, m_r$):
+  if $\abs{m_l} \neq \abs{m_r}$:
+    error
+  $c := \Sigma.enc(k, m_l)$
+  return 00 || c
+	\end{lstlisting}
+\end{library}
+
+Extracting $L^{\Sigma}_{\text{CPA-Left}}$:
+
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L^{\Sigma'}_{\text{CPA-Left}}$}
+		\begin{lstlisting}[mathescape=true]
+EAVESDROP($m_l, m_r$):
+  $c := EAVESDROP'(m_l, m_r)$
+  return 00 || c
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$L^{\Sigma}_{\text{CPA-Left}}$}
+		\begin{lstlisting}[mathescape=true]
+$k \leftarrow \{0, 1\}^\lambda$
+EAVESDROP'($m_l, m_r$):
+  if $\abs{m_l} \neq \abs{m_r}$:
+    error
+  return $\Sigma.enc(k, m_l)$
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+Due to the CPA\$ and hence CPA security of $\Sigma$:
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L^{\Sigma'}_{\text{CPA-Left}}$}
+		\begin{lstlisting}[mathescape=true]
+EAVESDROP($m_l, m_r$):
+  $c := EAVESDROP'(m_l, m_r)$
+  return 00 || c
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$L^{\Sigma}_{\text{CPA-Right}}$}
+		\begin{lstlisting}[mathescape=true]
+$k \leftarrow \{0, 1\}^\lambda$
+EAVESDROP'($m_l, m_r$):
+  if $\abs{m_l} \neq \abs{m_r}$:
+    error
+  return $\Sigma.enc(k, m_r)$
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+And finally inlining the definition once more:
+\begin{library}{$L^{\Sigma'}_{\text{CPA-Right}}$}
+	\begin{lstlisting}[mathescape=true]
+$k \leftarrow \{0, 1\}^\lambda$
+EAVESDROP($m_l, m_r$):
+  if $\abs{m_l} \neq \abs{m_r}$:
+    error
+  $c := \Sigma.enc(k, m_r)$
+  return 00 || c
+	\end{lstlisting}
+\end{library}
+
+As $L^{\Sigma'}_{\text{CPA-Left}} \diffeo L^{\Sigma'}_{\text{CPA-Right}}$,
+$\Sigma'$ possesses CPA security.
+
+\section{From a PRP to CPA-secure encryption}
+
+\subsection{a)}
+
+\subsubsection{Decryption algorithm}
+
+\begin{library}{$\Sigma$}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		Dec(k, (r, z)):
+		  $c = z \oplus r$
+		  $m = F^{-1}(k, c)$
+		  return m
+	\end{lstlisting}
+\end{library}
+
+\subsubsection{CPA security}
+
+Consider the following distinguisher:
+\begin{library}{$B$}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		$m_l = 0^\lambda$
+		$m_r = 1^{\lambda - 1} || 0$
+		$m'_r = 1^{\lambda - 1} || 1$
+
+		$(r_1, z_1) := EAVESDROP(m_l, m_r)$
+		$(r_2, z_2) := EAVESDROP(m_l, m'_r)$
+		$c_1 := r_1 \oplus z_1$
+		$c_2 := r_2 \oplus z_2$
+
+		return $c_1 == c_2$
+	\end{lstlisting}
+\end{library}
+
+By nature of its construction:
+\[
+	P[B \diamond L^{\Sigma}_{\text{CPA-Left}} \rightarrow 1] = 1
+\]
+
+And, as $F$ has to be invertible so is injective:
+\[
+	P[B \diamond L^{\Sigma}_{\text{CPA-Right}} \rightarrow 1] = 0
+\]
+
+Hence $\lim_{\lambda \to \infty} Bias(B) = 1$ which is not negligible,
+so the encryption scheme does not possess CPA-security.
+
+\subsection{b)}
+
+\subsubsection{Decryption algorithm}
+
+\begin{library}{$\Sigma$}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		Dec(k, (s, x)):
+		  $r := F^{-1}(k, x)$
+		  $m = s \oplus r$
+		  return m
+	\end{lstlisting}
+\end{library}
+
+\subsubsection{CPA security}
+
+
+\subsection{c)}
+
+\subsubsection{Decryption algorithm}
+
+\begin{library}{$\Sigma$}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		Dec(k, (x, y)):
+		  $s_1 = F^{-1}(k, x)$
+		  $s_2 = F^{-1}(k, y)$
+		  $m = s_2 \oplus s_1$
+		  return m
+	\end{lstlisting}
+\end{library}
+
+\subsubsection{CPA security}
+
+Consider the following distinguisher:
+
+\begin{library}{$B$}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		$m_l = 0^\lambda$
+		$m_r = 1^\lambda$
+
+		$(x, y) := EAVESDROP(m_l, m_r)$
+
+		return x == y
+	\end{lstlisting}
+\end{library}
+
+By nature of its construction:
+\begin{align*}
+	P[B \diamond L^{\Sigma}_{\text{CPA-Left}} \rightarrow 1] & = P[F(k, s_1) = F(k, s_2)] \\
+	& = P[F(k, s_1) = F(k, s_1 \oplus m)] \\
+	& = P[s_1 = s_1 \oplus m] \tag*{As F is deterministic} \\
+	& = 1\tag*{As $x \oplus 0^\lambda = x$ for all $\lambda$-bit strings $x$}
+\end{align*}
+
+And:
+\begin{align*}
+	P[B \diamond L^{\Sigma}_{\text{CPA-Right}} \rightarrow 1] & = P[F(k, s_1) = F(k, s_2)] \\
+	& = P[s_1 = s_1 \oplus m] \tag*{As F is deterministic} \\
+	& = 0 \tag*{As $x \oplus 1^\lambda \neq x$ for all $\lambda$-bit strings $x$}
+\end{align*}
+
+Hence $\lim_{\lambda \to \infty} Bias(B) = 1$ which is not negligible,
+so the encryption scheme does not possess CPA-security.
+
+\section{Modes of operation}
+
+\end{document}
+
+
