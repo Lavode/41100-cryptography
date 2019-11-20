@@ -128,8 +128,6 @@
 \setcounter{chapter}{7}
 \chapter{Series 8}
 
-Let $\Sigma := \{0, 1\}$.
-
 \section{CPA-secure encryption?}
 
 Let $\Sigma$ be an encryption scheme with CPS-\$ security. Let $\Sigma'$ be an
@@ -143,12 +141,12 @@ $\Sigma'$ does not posess CPA-\$ security.
 	Consider the following distinguisher
 
 	\begin{library}{$B$}
-		\begin{lstlisting}[mathescape=true]
-$m \leftarrow \Sigma^l$
-# $c_i$ individual bits of output
-$c_1 || c_2 || c_3 || \cdots || c_l = CTXT(m)$
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			$m \leftarrow \{0, 1\}^l$
+			# $c_i$ individual bits of output
+			$c_1 || c_2 || c_3 || \cdots || c_l = CTXT(m)$
 
-return $c_1$ == 0 && $c_2$ == 0
+			return $c_1$ == 0 && $c_2$ == 0
 		\end{lstlisting}
 	\end{library}
 
@@ -264,11 +262,10 @@ Consider the following distinguisher:
 \begin{library}{$B$}
 	\begin{lstlisting}[mathescape=true,autogobble=true]
 		$m_l = 0^\lambda$
-		$m_r = 1^{\lambda - 1} || 0$
-		$m'_r = 1^{\lambda - 1} || 1$
+		$m_r = 1^\lambda$
 
-		$(r_1, z_1) := EAVESDROP(m_l, m_r)$
-		$(r_2, z_2) := EAVESDROP(m_l, m'_r)$
+		$(r_1, z_1) := EAVESDROP(m_l, m_l)$
+		$(r_2, z_2) := EAVESDROP(m_l, m_r)$
 		$c_1 := r_1 \oplus z_1$
 		$c_2 := r_2 \oplus z_2$
 
@@ -414,8 +411,8 @@ lecture. Inlining that code then yields:
 	\end{library}
 \end{tcbraster}
 
-Finally using the fact that the XOR of two binary strings, one of which is
-chosen from a uniform distribution, follows a uniforml distribution once more,
+Finally using the fact that the XOR of two binary strings one of which is
+chosen from a uniform distribution, follows a uniform distribution once more,
 and inlining the resulting code:
 
 \begin{library}{$L^{\Sigma}_{\text{CPA\$-Rand}}$}
@@ -429,7 +426,7 @@ and inlining the resulting code:
 	\end{lstlisting}
 \end{library}
 
-This library finally returns two randomly values chosen from a uniform
+This library finally returns two randoml values chosen from a uniform
 distribution.  As such the encryption scheme possesses CPA\$ security.
 
 
@@ -481,6 +478,31 @@ Hence $\lim_{\lambda \to \infty} Bias(B) = 1$ which is not negligible,
 so the encryption scheme does not possess CPA-security.
 
 \section{Modes of operation}
+
+Let $m_i$ be the $\lambda$-bit blocks of plaintext, $c_i$ the corresponding
+blocks of ciphertext.
+
+\subsection{CBC}
+
+As $c_i := F_k(m_i \oplus c_{i-1})$, a change in one input bit of $m_i$ will
+affect all ciphertexts $c_j$ with $j \geq i$, that is all following blocks of
+ciphertext.
+
+Further, due to the properties of $F$, multiple `random' (uncorrelated with
+which bit of the input was changed) bits of each ciphertext block will be
+changed.
+
+\subsection{OFB}
+
+As each block of ciphertext is the XOR of the plaintext and the seed fed
+i-times through $F$, changing one bit of a plaintext block $m_i$ will cause a
+change in only the corresponding bit of the ciphertext block $c_i$.
+
+\subsection{CTR}
+
+As in the case of OFB, $m_i$ is only used in the calculation of $c_i$. Since
+$c_i = m_i \oplus F_k(\$ + i - 1)$, changing one bit of $m_i$ will cause a
+change in only the corresponding bit of $c_i$.
 
 \end{document}
 
