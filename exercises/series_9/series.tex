@@ -1,0 +1,253 @@
+\documentclass[a4paper]{scrreprt}
+
+% Uncomment to optimize for double-sided printing.
+% \KOMAoptions{twoside}
+
+% Set binding correction manually, if known.
+% \KOMAoptions{BCOR=2cm}
+
+% Localization options
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Quotations
+\usepackage{dirtytalk}
+
+% Enhanced verbatim sections. We're mainly interested in
+% \verbatiminput though.
+\usepackage{verbatim}
+
+% Automatically remove leading whitespace in lstlisting
+\usepackage{lstautogobble}
+
+% PDF-compatible landscape mode.
+% Makes PDF viewers show the page rotated by 90°.
+\usepackage{pdflscape}
+
+% Advanced tables
+\usepackage{tabu}
+\usepackage{longtable}
+
+% Fancy tablerules
+\usepackage{booktabs}
+
+% Graphics
+\usepackage{graphicx}
+
+% Current time
+\usepackage[useregional=numeric]{datetime2}
+
+% Float barriers.
+% Automatically add a FloatBarrier to each \section
+\usepackage[section]{placeins}
+
+% Custom header and footer
+\usepackage{fancyhdr}
+
+\usepackage{geometry}
+\usepackage{layout}
+
+% Math tools
+\usepackage{mathtools}
+% Math symbols
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
+% Indistinguishable operator (three stacked tildes)
+\newcommand*{\diffeo}{% 
+  \mathrel{\vcenter{\offinterlineskip
+  \hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}}}}
+
+% Bullet point
+\newcommand{\tabitem}{~~\llap{\textbullet}~~}
+
+\pagestyle{plain}
+% \fancyhf{}
+% \lhead{}
+% \lfoot{}
+% \rfoot{}
+% 
+% Source code & highlighting
+\usepackage{listings}
+
+% Coloured boxes!
+\usepackage[most]{tcolorbox}
+\newtcolorbox{library}[2][]{
+	enhanced,
+	sharp corners,
+	coltitle=black, % title colour
+	colbacktitle=black!10!white, % title bg colour
+	halign title=center, % title align
+	toptitle=1mm, % Top/bottom additional spacing for title
+	bottomtitle=1mm,
+	fonttitle=\ttfamily,
+	colback=white, % body bg colour
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+\newtcolorbox{boxcomment}[2][]{
+	enhanced,
+	colframe=white, % frame colour
+	colbacktitle=white, % title bg colour
+	halign=center, % body align
+	colback=white, % body bg colour
+	fonttitle=\ttfamily,
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+% SI units
+\usepackage[binary-units=true]{siunitx}
+\DeclareSIUnit\cycles{cycles}
+
+% Convenience commands
+\newcommand{\mailsubject}{41100 - Cryptography - Series 9}
+\newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
+                               {#1}}
+
+% Should use this command wherever the print date is mentioned.
+\newcommand{\printdate}{\today}
+
+\subject{41100 - Cryptography}
+\title{Series 9}
+
+\author{Michael Senn \maillink{michael.senn@students.unibe.ch} - 16-126-880}
+
+\date{\printdate}
+
+% Needs to be the last command in the preamble, for one reason or
+% another. 
+\usepackage{hyperref}
+
+
+\begin{document}
+\maketitle
+
+
+\setcounter{chapter}{8}
+\chapter{Series 9}
+
+\section{Diffie-Hellman assumptions}
+
+\subsection{Computational Diffie-Hellman assumption}
+
+Consider the following two libraries.
+
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L^{G}_{\text{CDH-Real}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			$a, b \leftarrow \mathbb{Z}_q$
+
+			SEED():
+			  return ($g^a, g^b$)
+
+			CHECK(x):
+			  if $x = {(g^a)}^b$:
+			    return 1
+			  else:
+			    return 0
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$L^{G}_{\text{CDH-Fake}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			$a, b \leftarrow \mathbb{Z}_q$
+
+			SEED():
+			  return ($g^a, g^b$)
+
+			CHECK(x):
+			  return 0
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+The behaviour of the two libraries differs only in the presence of one
+conditional expression. Per the bad-event lemma, the advantage of any
+polynomial-time distinguisher $A$ is then bounded by the probability of the
+differing branch of the conditional expression being entered.
+
+As the CDH is that given $(g^a, g^b)$ a polynomial-time attacker can not compute
+$g^{ab}$ with non-negligible probability, the advantage of any such
+distinguisher is hence bounded by a negligible probability. As such the two
+libraries are indistinguishable.
+
+\subsection{Relation between computational and decisional Diffie-Hellman assumption}
+
+The CDH is a stronger requirement than the DDH, as it requires computing
+$g^{ab}$ in polynomial time with non-negligible probability, rather than merely
+differentiating the `real' $g^{ab}$ from a `fake' $g^c$ with non-negligible
+probability. To illustrate, if $COMPUTE(g^a, g^b)$ is an algorithm which
+computes $g^{ab}$ in polynomial time with non-negligible probability $p$, then
+the following distinguisher breaks DDH:
+
+\begin{library}{$A$}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		$(g^a, g^b, x) := QUERY()$
+		$g^{ab} := COMPUTE(g^a, g^b)$
+
+		if $x = g^{ab}$:
+		  return 1
+		else:
+		  return 0
+	\end{lstlisting}
+\end{library}
+
+By nature of its construction:
+\[
+	P[A \diamond L^{G}_{\text{DH-Real}} \rightarrow 1] = p
+\]
+
+And:
+\[
+	P[A \diamond L^{G}_{\text{DH-Rand}} \rightarrow 1] = \frac{p}{q} + \phi
+\]
+That is $A$ linked to DH-Rand will output $1$ if either $c$ was randomly chosen
+such that $g^c = g^{ab}$ in which case $COMPUTE$ calculates the correct result
+with probability $p$, or $c$ was one of the other $q-1$ choices and $COMPUTE$
+got the `correct' result by chance, a negligible probability $\phi$.
+
+As such:
+\begin{align*}
+	Bias(A) & = lim_{q \rightarrow \infty}(p - \frac{p}{q} - \phi)\\
+	        & = lim_{q \rightarrow \infty}(p) - lim_{q \rightarrow \infty}\left(\frac{p}{q}\right) - lim_{q \rightarrow \infty}\left(\frac{q-1}{q} \cdot \phi\right) \\
+		& = lim_{q \rightarrow \infty}(p) - 0 - 0 \tag*{$\phi$ is negligible, $p \leq 1$} \\
+		& \neq 0 \tag*{$p$ is not negligible}
+\end{align*}
+
+Hence the distinguisher has a non-negligible advantage, therefore breaking
+decisional Diffie-Hellman.
+
+\section{Man-in-the-middle attack on DH}
+
+The proposed scenario leads to the three parties being in posession of the
+following components of the key, and the resulting keys:
+\\
+
+\begin{tabular}{llll}
+	\toprule
+	& Alice & Eve & Bob \\
+	\midrule
+	Key components & $a, g^{b'}$ & $a', b', g^a, g^b$ & $b, g^{a'}$ \\
+	Keys & $g^{ab'}$ & $g^{ab'}, g^{a'b}$ & $g^{a'b}$ \\
+	\bottomrule
+\end{tabular}
+\\
+
+This shows that effectively two `secure' channels are established, one between
+Alice and Eve, the other between Bob and Eve, while to Alice and Bob it looks
+as if they were connected via one secure channel. This allows Eve to - as long
+as she can maintain her position such that she can intercept \& modify all
+communication between Alice and Bob - not only listen to, but also modify, all
+communication. This illustrates the lack of authentication provided by DH,
+showcasing the need for an additional layer which prevents MITM attacks during
+the initial key exchange.
+
+\section{Quadratic residues}
+
+\end{document}
+
+
