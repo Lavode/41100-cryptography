@@ -1,0 +1,183 @@
+\documentclass[a4paper]{scrreprt}
+
+% Uncomment to optimize for double-sided printing.
+% \KOMAoptions{twoside}
+
+% Set binding correction manually, if known.
+% \KOMAoptions{BCOR=2cm}
+
+% Localization options
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Quotations
+\usepackage{dirtytalk}
+
+% Enhanced verbatim sections. We're mainly interested in
+% \verbatiminput though.
+\usepackage{verbatim}
+
+% Automatically remove leading whitespace in lstlisting
+\usepackage{lstautogobble}
+
+% PDF-compatible landscape mode.
+% Makes PDF viewers show the page rotated by 90°.
+\usepackage{pdflscape}
+
+% Advanced tables
+\usepackage{tabu}
+\usepackage{longtable}
+
+% Fancy tablerules
+\usepackage{booktabs}
+
+% Graphics
+\usepackage{graphicx}
+
+% Current time
+\usepackage[useregional=numeric]{datetime2}
+
+% Float barriers.
+% Automatically add a FloatBarrier to each \section
+\usepackage[section]{placeins}
+
+% Custom header and footer
+\usepackage{fancyhdr}
+
+\usepackage{geometry}
+\usepackage{layout}
+
+% Math tools
+\usepackage{mathtools}
+% Math symbols
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+% General symbols
+\usepackage{stmaryrd}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
+% Indistinguishable operator (three stacked tildes)
+\newcommand*{\diffeo}{% 
+  \mathrel{\vcenter{\offinterlineskip
+  \hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}}}}
+
+% Bullet point
+\newcommand{\tabitem}{~~\llap{\textbullet}~~}
+
+\pagestyle{plain}
+% \fancyhf{}
+% \lhead{}
+% \lfoot{}
+% \rfoot{}
+% 
+% Source code & highlighting
+\usepackage{listings}
+
+% Coloured boxes!
+\usepackage[most]{tcolorbox}
+\newtcolorbox{library}[2][]{
+	enhanced,
+	sharp corners,
+	coltitle=black, % title colour
+	colbacktitle=black!10!white, % title bg colour
+	halign title=center, % title align
+	toptitle=1mm, % Top/bottom additional spacing for title
+	bottomtitle=1mm,
+	fonttitle=\ttfamily,
+	colback=white, % body bg colour
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+\newtcolorbox{boxcomment}[2][]{
+	enhanced,
+	colframe=white, % frame colour
+	colbacktitle=white, % title bg colour
+	halign=center, % body align
+	colback=white, % body bg colour
+	fonttitle=\ttfamily,
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+% SI units
+\usepackage[binary-units=true]{siunitx}
+\DeclareSIUnit\cycles{cycles}
+
+% Convenience commands
+\newcommand{\mailsubject}{41100 - Cryptography - Series 10}
+\newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
+                               {#1}}
+
+% Should use this command wherever the print date is mentioned.
+\newcommand{\printdate}{\today}
+
+\subject{41100 - Cryptography}
+\title{Series 10}
+
+\author{Michael Senn \maillink{michael.senn@students.unibe.ch} - 16-126-880}
+
+\date{\printdate}
+
+% Needs to be the last command in the preamble, for one reason or
+% another. 
+\usepackage{hyperref}
+
+
+\begin{document}
+\maketitle
+
+
+\setcounter{chapter}{9}
+\chapter{Series 10}
+
+\section{ElGamal encryption}
+
+
+\subsection{Product of messages}
+
+Given $c_1 := (g^{r_1}, m_1 \cdot Y^{r_1})$, $c_2 := (g^{r_2}, m_2 
+\cdot Y^{r_2})$, let $R := g^{r_1} \cdot g^{r_2} = g^{r_1 + r_2}$, and $C := m_1
+ Y^{r_1} \cdot m_2 Y^{r_2} = m_1 m_2 \cdot Y^{r_1 + r_2}$. Then:
+\begin{align*}
+  Dec(x, (R, C)) & = C / R^x \\
+                 & = \frac{m_1 m_2 \cdot Y^{r_1 + r_2}}{{g^{r_1 + r_2}}^{x}} \\
+                 & = \frac{m_1 m_2 \cdot g^{x (r_1 + r_2)}}{g^{(r_1 + r_2)x}} \\
+                 & = m_1 \cdot m_2
+\end{align*}
+
+\subsection{Plaintext collision}
+
+Given $Y, x := KeyGen()$, $R_1, C_1 := Enc(Y, m)$, pick $r_2 \leftarrow
+\mathbb{Z}_q$ such that $Y^{r_2} \neq Y^{r_1}$. Let $R_2, C_2 := (g^{r_2}, m \cdot
+Y^{r_2})$.
+
+Then:
+\[
+  C_2 = m \cdot Y^{r_2} \neq m \cdot Y^{r_1} = C_1
+\]
+
+And:
+\[
+  Dec(x, (R_2, C_2)) = m = Dec(x, (R_1, C_1))
+\]
+
+\subsection{Reusing $R$}
+
+If $R = g^r$ is reused to encrypt two messages $m_1, m_2$, then $C_1 = m_1
+\cdot Y^r$, and $C_2 = m_2 \cdot Y^r$. As such:
+
+\[
+  \frac{C_1}{C_2} = \frac{m_1 \cdot Y^r}{m_2 \cdot Y^r} = \frac{m_1}{m_2}
+\]
+
+This allows to derive one message based on its cipher text if the other message
+is known.
+
+\section{Ciphertext size of CPA-secure public-key encryption}
+
+\section{Unbounded power}
+
+\end{document}
