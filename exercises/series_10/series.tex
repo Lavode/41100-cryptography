@@ -138,9 +138,11 @@
 
 \subsection{Product of messages}
 
-Given $c_1 := (g^{r_1}, m_1 \cdot Y^{r_1})$, $c_2 := (g^{r_2}, m_2 
-\cdot Y^{r_2})$, let $R := g^{r_1} \cdot g^{r_2} = g^{r_1 + r_2}$, and $C := m_1
- Y^{r_1} \cdot m_2 Y^{r_2} = m_1 m_2 \cdot Y^{r_1 + r_2}$. Then:
+Given $c_1 := (g^{r_1}, m_1 \cdot Y^{r_1})$, $c_2 := (g^{r_2}, m_2 \cdot
+Y^{r_2})$. 
+
+Let $R := g^{r_1} \cdot g^{r_2} = g^{r_1 + r_2}$, and $C := m_1 Y^{r_1} \cdot
+m_2 Y^{r_2} = m_1 m_2 \cdot Y^{r_1 + r_2}$. Then:
 \begin{align*}
   Dec(x, (R, C)) & = C / R^x \\
                  & = \frac{m_1 m_2 \cdot Y^{r_1 + r_2}}{{g^{r_1 + r_2}}^{x}} \\
@@ -178,6 +180,81 @@ is known.
 
 \section{Ciphertext size of CPA-secure public-key encryption}
 
+If the length of the ciphertext is $\alpha \log(\lambda)$, then there exist at
+most $n := 2^{\alpha \log(\lambda)}$ cipher texts. Note that for sufficiently large
+values of $\lambda$, $2^{\log(\lambda)} \leq \lambda$ - with equality in the
+case of the logarithm with base $2$ -  as such $n \leq
+\lambda^\alpha$ is bounded by a polynomial function.
+
+If the number of ciphertexts is bounded by a polynomial function, a polynomial
+attacker is able to enumerate a non-negligible quantity of the cipher text
+space. Consider the following distinguisher:
+
+\begin{library}{$A$}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		# Expected value of coupon collector's problem
+		lookup_table_size := $n \cdot H_n$
+		known_ctxts := () # Empty set
+
+		$p_k := GETKEY()$
+
+		for i = 1 to lookup_table_size:
+		  known_ctxts << $\Sigma$.Enc($p_k$, 0)
+
+		c := TEST(0, 1)
+
+		if c in known_ctxts:
+		  return 1
+		else:
+		  return 0
+	\end{lstlisting}
+\end{library}
+
+If $n$ is bounded by a polynomial function then the expected value of the
+coupon collector's problem $n \cdot H_n$, with $H_n$ the n-th harmonic number,
+is bounded by a polynomial function too, so such an enumeration can be done.
+
+As such:
+
+\[
+	P\left[A \diamond L^\Sigma_{\text{pk-CPA-R}} \rightarrow 1\right] = 0
+\]
+
+And with the chosen value of $n$:
+
+\[
+	P\left[A \diamond L^\Sigma_{\text{pk-CPA-L}} \rightarrow 1\right] = 0.5
+\]
+
+This distinguisher has an advantage of $Bias(A) = 0.5$, so $\Sigma$ does not
+possess pk-CPA security.
+
 \section{Unbounded power}
+
+Consider the following brute-force algorithm which, given a ciphertext $c$ and
+public key $p_k$ computes the corresponding plaintext $m$:
+
+\begin{library}{$A$}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		COMPUTE($c, p_k$):
+		  while True:
+		    if $c = \Sigma.Enc(p_k, 0)$:
+		      return 0
+		    if $c = \Sigma.Enc(p_k, 1)$:
+		      return 1
+	\end{lstlisting}
+\end{library}
+
+Such an algorithm clearly has non-polynomial running time as the size of the
+space of cipher texts is not polynomial in the security parameter $\lambda$.
+It is, however guaranteed to terminate in finite time, as each attempt at
+computing the plaintext has a probability of success greater than zero, so the
+cumulative probability of success approaches $1$ as the amount of iterations
+increases. In other words the probability of not terminating approaches zero as
+the number of iterations approaches infinity.
+
+Other possibly more efficient alternatives exist as well, such as repeatedly  
+calling $(p'_k, s'_k) := KeyGen()$ until $p'_k = p_k$, in which case $s'_k$ is
+the used secret key.
 
 \end{document}
