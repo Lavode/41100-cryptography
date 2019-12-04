@@ -192,8 +192,9 @@ space. Consider the following distinguisher:
 
 \begin{library}{$A$}
 	\begin{lstlisting}[mathescape=true,autogobble=true]
-		# Expected value of coupon collector's problem
-		lookup_table_size := $n \cdot H_n$
+		# Multiple of expected value of coupon collector's problem
+		# $H_n$ is the n-th harmonic number
+		lookup_table_size := $2 \cdot n \cdot H_n$
 		known_ctxts := () # Empty set
 
 		$p_k := GETKEY()$
@@ -210,9 +211,14 @@ space. Consider the following distinguisher:
 	\end{lstlisting}
 \end{library}
 
-If $n$ is bounded by a polynomial function then the expected value of the
-coupon collector's problem $n \cdot H_n$, with $H_n$ the n-th harmonic number,
-is bounded by a polynomial function too, so such an enumeration can be done.
+Estimating the probabilities can be done by treating this as an instance of the
+coupon collector's problem. If $X$ is the coupon collector problem with $n$ as
+above, then $E[X] = n \cdot H_n$ is its expected value ($H_n$ being the n-th
+harmonic number), and there exists an upper bound $P[X \geq c \cdot n \cdot
+H_n] \leq \frac{1}{c}$.
+
+As $n$ is bounded by a polynomial function, $2 \cdot n \cdot H_n$ as a product
+of polynomial functions is polynomial as well.
 
 As such:
 
@@ -220,13 +226,13 @@ As such:
 	P\left[A \diamond L^\Sigma_{\text{pk-CPA-R}} \rightarrow 1\right] = 0
 \]
 
-And with the chosen value of $n$:
+And:
 
 \[
-	P\left[A \diamond L^\Sigma_{\text{pk-CPA-L}} \rightarrow 1\right] = 0.5
+	P\left[A \diamond L^\Sigma_{\text{pk-CPA-L}} \rightarrow 1\right] \geq 0.5
 \]
 
-This distinguisher has an advantage of $Bias(A) = 0.5$, so $\Sigma$ does not
+This distinguisher has an advantage of $Bias(A) \geq 0.5$, so $\Sigma$ does not
 possess pk-CPA security.
 
 \section{Unbounded power}
@@ -253,8 +259,8 @@ cumulative probability of success approaches $1$ as the amount of iterations
 increases. In other words the probability of not terminating approaches zero as
 the number of iterations approaches infinity.
 
-Other possibly more efficient alternatives exist as well, such as repeatedly  
-calling $(p'_k, s'_k) := KeyGen()$ until $p'_k = p_k$, in which case $s'_k$ is
-the used secret key.
+Other possibly more efficient (though still non-polynomial) alternatives exist
+as well, such as repeatedly  calling $(p'_k, s'_k) := KeyGen()$ until $p'_k =
+p_k$, in which case $s'_k$ is the used secret key.
 
 \end{document}
