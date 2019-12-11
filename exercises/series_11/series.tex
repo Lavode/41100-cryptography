@@ -216,10 +216,9 @@ O(2^{\log(\lambda)}) = O(\lambda)$ Consider the following algorithm:
 	\end{lstlisting}
 \end{library}
 
-With the limitations on $p$ as above, this algorithm will be in $O(\sqrt{p})$
-as it'll terminate at once it reaches $p$, which will be `small'. As $p =
-O(\lambda)$, the algorithm's complexity is given as $O(\sqrt{p}) =
-O(\sqrt{O(\lambda)}) = O(\sqrt{\lambda})$, which is polynomial so is efficient.
+This algorithm will terminate once it reaches $p$, which will be `small'. As $p
+= O(\lambda)$, the algorithm's complexity is given as $O(p) = O(O(\lambda)) =
+O(\lambda)$, which is polynomial so is efficient.
 
 \subsection{Small difference of $p, q$}
 
