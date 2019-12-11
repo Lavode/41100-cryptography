@@ -152,6 +152,7 @@ This allows computing a valid encryption of $Enc(Y, m_1 m_2$) as:
 \end{align*}
 
 \subsection{RSA}
+\label{sec:malleability_rsa}
 
 Let $\oplus, \otimes$ be the respective multiplications. Let $m_1, m_2$ be two
 plaintext messages. Then:
@@ -245,5 +246,13 @@ $O(\log(\lambda))$ of each other, and so also of $\sqrt{N}$. As this is
 polynomially bounded the algorithm is efficient.
 
 \section{RSA oracle}
+
+Given a ciphertext $c = Enc((N, e), m)$, and the ability to decrypt any
+ciphertext $c' \neq c$ we can decrypt $c$ by using the malleability of textbook
+RSA. 
+
+Let $c' := Enc((N, e), 2) \cdot c$. Per the malleability shown in subsection
+\ref{sec:malleability_rsa}, $c' = Enc((N, e), 2) \cdot Enc((N, e), m)$. Further
+$Dec(d, c') = Dec(d, 2) \cdot Dec(d, c) = 2c$, which allows to retrieve $c$.
 
 \end{document}
