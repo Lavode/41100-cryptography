@@ -1,0 +1,249 @@
+\documentclass[a4paper]{scrreprt}
+
+% Uncomment to optimize for double-sided printing.
+% \KOMAoptions{twoside}
+
+% Set binding correction manually, if known.
+% \KOMAoptions{BCOR=2cm}
+
+% Localization options
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Quotations
+\usepackage{dirtytalk}
+
+% Enhanced verbatim sections. We're mainly interested in
+% \verbatiminput though.
+\usepackage{verbatim}
+
+% Automatically remove leading whitespace in lstlisting
+\usepackage{lstautogobble}
+
+% PDF-compatible landscape mode.
+% Makes PDF viewers show the page rotated by 90°.
+\usepackage{pdflscape}
+
+% Advanced tables
+\usepackage{tabu}
+\usepackage{longtable}
+
+% Fancy tablerules
+\usepackage{booktabs}
+
+% Graphics
+\usepackage{graphicx}
+
+% Current time
+\usepackage[useregional=numeric]{datetime2}
+
+% Float barriers.
+% Automatically add a FloatBarrier to each \section
+\usepackage[section]{placeins}
+
+% Custom header and footer
+\usepackage{fancyhdr}
+
+\usepackage{geometry}
+\usepackage{layout}
+
+% Math tools
+\usepackage{mathtools}
+% Math symbols
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+% General symbols
+\usepackage{stmaryrd}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
+% Indistinguishable operator (three stacked tildes)
+\newcommand*{\diffeo}{% 
+  \mathrel{\vcenter{\offinterlineskip
+  \hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}}}}
+
+% Bullet point
+\newcommand{\tabitem}{~~\llap{\textbullet}~~}
+
+\pagestyle{plain}
+% \fancyhf{}
+% \lhead{}
+% \lfoot{}
+% \rfoot{}
+% 
+% Source code & highlighting
+\usepackage{listings}
+
+% Coloured boxes!
+\usepackage[most]{tcolorbox}
+\newtcolorbox{library}[2][]{
+	enhanced,
+	sharp corners,
+	coltitle=black, % title colour
+	colbacktitle=black!10!white, % title bg colour
+	halign title=center, % title align
+	toptitle=1mm, % Top/bottom additional spacing for title
+	bottomtitle=1mm,
+	fonttitle=\ttfamily,
+	colback=white, % body bg colour
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+\newtcolorbox{boxcomment}[2][]{
+	enhanced,
+	colframe=white, % frame colour
+	colbacktitle=white, % title bg colour
+	halign=center, % body align
+	colback=white, % body bg colour
+	fonttitle=\ttfamily,
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+% SI units
+\usepackage[binary-units=true]{siunitx}
+\DeclareSIUnit\cycles{cycles}
+
+% Convenience commands
+\newcommand{\mailsubject}{41100 - Cryptography - Series 11}
+\newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
+                               {#1}}
+
+% Should use this command wherever the print date is mentioned.
+\newcommand{\printdate}{\today}
+
+\subject{41100 - Cryptography}
+\title{Series 11}
+
+\author{Michael Senn \maillink{michael.senn@students.unibe.ch} - 16-126-880}
+
+\date{\printdate}
+
+% Needs to be the last command in the preamble, for one reason or
+% another. 
+\usepackage{hyperref}
+
+
+\begin{document}
+\maketitle
+
+
+\setcounter{chapter}{10}
+
+\chapter{Series 11}
+
+\section{Computing with encrypted messages}
+
+\subsection{ElGamal}
+
+Let $\oplus, \otimes$ be the respective multiplications. Let $m_1, m_2$ be two
+plaintext messages. Then:
+\begin{align*}
+	Enc(Y, m_1) & = (g^{r_1}, m_1 Y^{r_1}) \\
+	Enc(Y, m_2) & = (g^{r_2}, m_2 Y^{r_2})
+\end{align*}
+
+This allows computing a valid encryption of $Enc(Y, m_1 m_2$) as:
+\begin{align*}
+	(g^{r_1} g^{r_2}, m_1 m_2 Y^{r_1} Y^{r_2}) & = (g^{r_1 + r_2}, m_1 m_2 Y^{r_1 + r_2}) \\
+						   & = Enc(p_k, m_1 m_2)
+\end{align*}
+
+\subsection{RSA}
+
+Let $\oplus, \otimes$ be the respective multiplications. Let $m_1, m_2$ be two
+plaintext messages. Then:
+\begin{align*}
+	Enc((N, e), m_1) & = m_1^e \mod N \\
+	Enc((N, e), m_2) & = m_2^e \mod N
+\end{align*}
+
+This allows computing a valid encryption of $Enc((N, e), m_1 m_2$) as:
+\begin{align*}
+	(m_1^e \mod N) (m_2^e \mod N) & = (m_1^e m_2^e) \mod N \\
+				      & = (m_1 m_2)^e \mod N \\
+				      & = Enc((N, e), m_1 m_2)
+\end{align*}
+
+
+\section{RSA parametes}
+
+\subsection{Odd encryption exponent $e$}
+
+As $p, q$ are chosen as big primes, they are both odd. Hence $\phi(pq) = (p -
+1) (q - 1)$ is even. Per definition $e$ and $\phi(pq)$ have to be coprime,
+which requires $e$ to be odd as the two numbers would have $2$ as a common
+factor otherwise.
+
+\subsection{Factoring $N$ given $N$ and $\phi(N)$}
+
+Given $N := pq$, and $\phi(N) = (p - 1) (q - 1)$ one can factor $N$ by solving
+the two equations as follows:
+\begin{align*}
+	N & = pq \Rightarrow p = \frac{q}{N} \\
+	0 & = (p - 1) (q - 1) - \phi(N) \tag*{Per the theorem shown in the lecture} \\
+	  & = (\frac{q}{N} - 1) (q - 1) - \phi(N) \tag*{Per the first equation above} \\
+	  & = \frac{q^2}{N} + q*(-1 - \frac{1}{N}) + 1 - \phi(N)
+\end{align*}
+
+This can then be solved for $q$ as a regular quadratic equation. Either of the
+two solutions then yields one of the possible values of $q$, from which $p = N
+/ q$ follows.
+
+\begin{align*}
+	p & = \frac{1}{2} (- \sqrt{(N - \phi(N) + 1)^2 - 4N} + N - \phi(N) + 1) \\
+	q & = \frac{1}{2} (\sqrt{N - \phi(N) + 1)^2 - 4N} + N - \phi(N) + 1)
+\end{align*}
+
+
+\section{Bad choice of prime factors}
+
+\subsection{Small $p$}
+
+Let $p$ be `small', that is $\abs{p} = O(\log(\lambda))$. Note that then $p =
+O(2^{\log(\lambda)}) = O(\lambda)$ Consider the following algorithm:
+
+\begin{library}{$FACTOR(N)$}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		$i : = 2$
+		while True:
+		  if $i | N$:
+		    return ($i, N / i$)
+		  i++
+	\end{lstlisting}
+\end{library}
+
+With the limitations on $p$ as above, this algorithm will be in $O(\sqrt{p})$
+as it'll terminate at once it reaches $p$, which will be `small'. As $p =
+O(\lambda)$, the algorithm's complexity is given as $O(\sqrt{p}) =
+O(\sqrt{O(\lambda)}) = O(\sqrt{\lambda})$, which is polynomial so is efficient.
+
+\subsection{Small difference of $p, q$}
+
+Let $p, q$ be `close' together, that is $\abs{p - q} = O(\log(\lambda))$.
+Consider the following algorithm:
+
+\begin{library}{$FACTOR(N)$}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		k := CEIL($\sqrt{N}$)
+		i := 0
+		while True:
+		  if $(k - i) | N$:
+		    return ($k - i, N / (k - i)$)
+		  elsif $(k + i) | N$:
+		    return ($k + i, N / (k + i)$)
+		  i++
+	\end{lstlisting}
+\end{library}
+
+As $p, q$ are close to each other, they will both be close to $\sqrt{N}$. Hence
+the above algorithm will have a complexity of $O(\log(\lambda))$ as it'll
+terminate once it reaches either of $p$ or $q$, both of which are within
+$O(\log(\lambda))$ of each other, and so also of $\sqrt{N}$. As this is
+polynomially bounded the algorithm is efficient.
+
+\section{RSA oracle}
+
+\end{document}
