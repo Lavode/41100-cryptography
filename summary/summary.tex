@@ -1,0 +1,267 @@
+\documentclass[a4paper]{scrreprt}
+
+% Uncomment to optimize for double-sided printing.
+% \KOMAoptions{twoside}
+
+% Set binding correction manually, if known.
+% \KOMAoptions{BCOR=2cm}
+
+% Localization options
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Quotations
+\usepackage{dirtytalk}
+
+% Enhanced verbatim sections. We're mainly interested in
+% \verbatiminput though.
+\usepackage{verbatim}
+
+% Automatically remove leading whitespace in lstlisting
+\usepackage{lstautogobble}
+
+% PDF-compatible landscape mode.
+% Makes PDF viewers show the page rotated by 90°.
+\usepackage{pdflscape}
+
+% Advanced tables
+\usepackage{tabu}
+\usepackage{longtable}
+
+% Fancy tablerules
+\usepackage{booktabs}
+
+% Graphics
+\usepackage{graphicx}
+
+% Current time
+\usepackage[useregional=numeric]{datetime2}
+
+% Float barriers.
+% Automatically add a FloatBarrier to each \section
+\usepackage[section]{placeins}
+
+% Custom header and footer
+\usepackage{fancyhdr}
+
+\usepackage{geometry}
+\usepackage{layout}
+
+% Math tools
+\usepackage{mathtools}
+% Math symbols
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
+% Indistinguishable operator (three stacked tildes)
+\newcommand*{\diffeo}{% 
+  \mathrel{\vcenter{\offinterlineskip
+  \hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}}}}
+
+\pagestyle{plain}
+% \fancyhf{}
+% \lhead{}
+% \lfoot{}
+% \rfoot{}
+% 
+% Source code & highlighting
+\usepackage{listings}
+
+% Coloured boxes!
+\usepackage[most]{tcolorbox}
+\newtcolorbox{library}[2][]{
+	enhanced,
+	sharp corners,
+	coltitle=black, % title colour
+	colbacktitle=black!10!white, % title bg colour
+	halign title=center, % title align
+	toptitle=1mm, % Top/bottom additional spacing for title
+	bottomtitle=1mm,
+	fonttitle=\ttfamily,
+	colback=white, % body bg colour
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+\newtcolorbox{boxcomment}[2][]{
+	enhanced,
+	colframe=white, % frame colour
+	colbacktitle=white, % title bg colour
+	halign=center, % body align
+	colback=white, % body bg colour
+	fonttitle=\ttfamily,
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+% SI units
+\usepackage[binary-units=true]{siunitx}
+\DeclareSIUnit\cycles{cycles}
+
+% Convenience commands
+\newcommand{\mailsubject}{41100 - Cryptography - Summary}
+\newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
+                               {#1}}
+
+% Should use this command wherever the print date is mentioned.
+\newcommand{\printdate}{\today}
+
+\subject{41100 - Cryptography}
+\title{Summary}
+
+\author{Michael Senn \maillink{michael.senn@students.unibe.ch} - 16-126-880}
+
+\date{\printdate}
+
+% Needs to be the last command in the preamble, for one reason or
+% another. 
+\usepackage{hyperref}
+
+
+\begin{document}
+\maketitle
+
+
+\chapter{Introduction}
+
+\section{Goals of cryptography}
+
+\begin{description}
+	\item[Confidentiality] Ensure only authorized parties are able to read
+		information. Encryption.
+	\item[Integrity] Ensure information is not modified en-route.
+		Signatures.
+	\item[Availability] Ensure information reachable by authorized parties,
+		not very relevant in modern contexts (not a cryptography
+		topic).
+\end{description}
+
+\section{Generic model for a cryptosystem}
+
+Alice wants to send message to Bob. Given a system $\Sigma$:
+
+\begin{library}{$\Sigma$}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		KeyGen() -> k
+		Enc(k, m) -> c
+		Dec(k, c) -> m'
+	\end{lstlisting}
+\end{library}
+
+Assuming key exchange happens separately and securely, the goal is to achieve:
+\begin{description}
+	\item[Completness] Bob obtains $m' = m$
+	\item[Security] Eve obtains `no useful' information about $m$
+\end{description}
+
+Which should hold for any sensible (excluding arbitrarily high computing power)
+adversary Eve.
+
+Modern-day security arguments are used which are not from the base up, but are
+based on assumptions such as $N \neq NP$.
+
+\section{Kerkhoff's principle}
+
+The security of a crypto system should not rely on the secrecy of the system's
+algorithms. This allows studying, reviewing \& reusing a system in public
+without compromising its security.
+
+\section{One-time pad}
+
+Perfectly secure, and just as inconvenient.
+
+\begin{library}{Vernam cipher $\Sigma$}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		KeyGen():
+		  k <- $\Sigma^l$
+		  return k
+
+		Enc(k, m):
+		  return $k \oplus m$
+
+		Dec(k, c):
+		  return $k \oplus c$
+	\end{lstlisting}
+\end{library}
+
+\begin{itemize}
+	\item Uniform radom ciphertext
+	\item Plaintext perfectly hidden
+	\item Ciphertext can be decrypted with any key, only one of which
+		yields original plaintext
+\end{itemize}
+
+\chapter{Provable security}
+
+Information-theoretically secure (eg OTP): No matter computational power of
+adversary, no information is gained. Computationally secure: All information is
+there, but information lacks time to derive it.
+
+\section{Formalization of encryption}
+
+\subsection{Correctness}
+
+A cryptosystem $\Sigma$ is secure if:
+\[
+	P[Dec(k, Enc(k, m)) = m] = 1 \forall k \in K, m \in M
+\]
+
+\subsection{Exchangable}
+
+Two libraries $L_1, L_2$ are exchangable (notation $L_1 \equiv L_2$) if for all distinguishing algorithms $A$:
+\[
+	P[A \diamond L_1 = 1] = P[A \diamond L_2 = 1]
+\]
+
+\subsection{Uniform ciphertext}
+
+An encryption scheme $\Sigma$ has uniform ciphertexts if the following two
+libraries are indistinguishable.
+
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L_{\text{OTS\$-Real}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			CTXT(m):
+			  k <- KeyGen()
+			  c <- Enc(k, m)
+			  return c
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$L_{\text{OTS\$-Rand}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			CTXT(m):
+			  c <- C
+			  return c
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+
+\subsection{One-time secrecy}
+
+An encryption scheme $\Sigma$ has one-time secrecy if the following two
+libraries are indistinguishable.
+
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L_{\text{OTS-Left}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			Eavesdrop($m_l, m_r$):
+			  k <- KeyGen()
+			  c <- Enc(k, m_l)
+			  return c
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$L_{\text{OTS-Right}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			Eavesdrop($m_l, m_r$):
+			  k <- KeyGen()
+			  c <- Enc(k, m_r)
+			  return c
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+\end{document}
