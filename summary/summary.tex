@@ -5,7 +5,6 @@
 
 % Set binding correction manually, if known.
 % \KOMAoptions{BCOR=2cm}
-
 % Localization options
 \usepackage[english]{babel}
 \usepackage[T1]{fontenc}
@@ -264,4 +263,176 @@ libraries are indistinguishable.
 	\end{library}
 \end{tcbraster}
 
+\subsection{Chaining lemma}
+
+If $L_1 \equiv L_2$, then $A \diamond L_1 \equiv A \diamond L_2 \forall A$
+
+\subsection{Computational security}
+
+Secure against a probabilistic polynomial time attacker in all but negligibly
+many cases.
+
+\subsubsection{Negligible probabilities}
+
+A function $f(\lambda)$ is negligible if $\lim f(\lambda) p(\lambda) = 0
+\forall p\ \text{polynomial}$.
+
+\subsubsection{Indistinguishability}
+
+Two libraries $L_1, L_2$ are indistinguishable $L_1 \approx L_2$ if $P[A
+\diamond L_1 \rightarrow 1] \approx P[A \diamond L_2 \rightarrow 1]$ for every
+probabilistic polynomial-time distinguisher $A$
+
+\chapter{Pseudorandom generator PRG}
+
+A PRG is a deterministic function which:
+\begin{itemize}
+	\item Stretches a short truly random seed to a large sequence of pseudorando bits
+	\item Directly gives a stream cipher
+	\item Is the most basic tool of cryptography
+\end{itemize}
+
+\section{PRG}
+
+A deterministic function $G: \{0, 1\}^\lambda \rightarrow \{0, 1\}^{\lambda +
+l}$ which satisfies $L_{\text{PRG-Real}} \equiv L_{\text{PRG-Rand}}$ where:
+
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L_{\text{PRG-Real}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			Query():
+			  $s \leftarrow \{0, 1\}^\lambda$
+			  return G(s)
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$L_{\text{PRG-Rand}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			Query():
+			  $r \leftarrow \{0, 1\}^{\lambda + l}$
+			  return r
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+Note that $|domain(G)| = 2^\lambda \geq |image(G)|$, with equality iff $G$ is injective.
+
+\subsection{Stream cipher using PRG $G$}
+
+\begin{library}{$S$}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		$K = \{0, 1\}^\lambda$
+		$M = \{0, 1\}^{\lambda + l}$
+		$C = \{0, 1\}^{\lambda + l}$
+
+		KeyGen():
+		  $k \leftarrow K$
+		  return k
+
+		Enc(k, m):
+		  return $G(k) \oplus m$
+
+		Dec(k, c):
+		  return $G(k) \oplus c$
+	\end{lstlisting}
+\end{library}
+
+If $G$ is a secure PRG, then S possesses computational one-time secrecy.
+
+% TODO 2019-10-11 and 2019-10-30
+
+\chapter{Pseudorandom functions}
+
+Given a key in $\{0, 1\}^\lambda$ it provides, for every input in $\{0,
+1\}^{in}$, an output in $\{0, 1\}^{out}$, indistinguishable from uniform random
+outputs on that same set.
+
+A PRF $F: \{0, 1\}^\lambda \times \{0, 1\}^{in} \rightarrow \{0, 1\}^{out}$ is
+a secure PRF if the following two libraries are indistinguishable.
+
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L^F_{\text{PRF\$-Real}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			$k \rightarrow \{0, 1\}^\lambda$
+
+			LOOKUP($x \in \{0, 1\}^{in}$):
+			  return F(k, x)
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$L^F_{\text{PRF\$-Rand}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			T := {}
+
+			LOOKUP($x \in \{0, 1\}^{in}$):
+			  if x not in T:
+			    T[x] $\rightarrow \{0, 1\}^{out}$
+			  return T[x]
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+\chapter{Block ciphers}
+
+\section{Constructing PRG from PRF}
+
+Given a PRF $F: \{0, 1\}^\lambda \times \{0, 1\}^\lambda \rightarrow \{0,
+1\}^\lambda$, we can construct a secure PRG $G: \{0, 1\}^\lambda \rightarrow
+\{0, 1\}^{k \cdot \lambda}$ as:
+
+\begin{lstlisting}[mathescape=true,autogobble=true]
+	G($s \in \{0, 1\}^\lambda$):
+	  for i = 1 to k do:
+	    $x_j := F(s, j)$
+	  return $x_1 || .. || x_k$
+\end{lstlisting}
+
+\section{Pseudo-random permutations PRP}
+
+$F: \{0, 1\}^\lambda \times \{0, 1\}^b \rightarrow \{0, 1\}^b$ is a
+pseudorandom permutation on $b$-bit strings if:
+\begin{itemize}
+	\item There exists a PRP $F^{-1}$ such that $F^{-1}(k, F(k, x)) = x \forall x$
+	\item The following two libraries are indistinguishable
+\end{itemize}
+
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L^F_{\text{PRP\$-Real}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			$k \rightarrow \{0, 1\}^\lambda$
+
+			LOOKUP(x)
+			  return F(k, x)
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$L^F_{\text{PRP\$-Rand}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			T := {}
+			R := {}
+
+			LOOKUP(x)
+			  if x not in T:
+			    T[x] = $\{0, 1\}^b \setminus R$
+			    $R := R \cup \{T[x]\}$
+			  return T[x]
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+Indistinguishable as $|R| / 2^\lambda$ negligible.
+
+Further: If F is secure PRP, then if is also secure PRF.
+
+\subsection{Constructiing secure PRP from PRF}
+
+Given a PRF $F: \{0, 1\}^\lambda \times \{0, 1\}^\lambda \rightarrow \{0,
+1\}^\lambda$, construct a PRP $P$ as follows:
+
+\begin{lstlisting}[mathescape=true,autogobble=true]
+	P(k, x || y):
+	  return $y || (F(k, y) \oplus x)$
+
+	P^{-1}(k, y || x'):
+	  return $(x \oplus F(k, y)) || y$
+\end{lstlisting}
+
 \end{document}
+
