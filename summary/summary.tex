@@ -421,7 +421,7 @@ Indistinguishable as $|R| / 2^\lambda$ negligible.
 
 Further: If F is secure PRP, then if is also secure PRF.
 
-\subsection{Constructiing secure PRP from PRF}
+\subsection{Constructing secure PRP from PRF}
 
 Given a PRF $F: \{0, 1\}^\lambda \times \{0, 1\}^\lambda \rightarrow \{0,
 1\}^\lambda$, construct a PRP $P$ as follows:
@@ -433,6 +433,320 @@ Given a PRF $F: \{0, 1\}^\lambda \times \{0, 1\}^\lambda \rightarrow \{0,
 	P^{-1}(k, y || x'):
 	  return $(x \oplus F(k, y)) || y$
 \end{lstlisting}
+
+\chapter{Security against chosen-plaintext attacks}
+
+Different types of attacks differ by capabilities and/or knowledge of attacker.
+
+\begin{itemize}
+	\item Chosen-Plaintext(CPA): Plaintext influenced, ciphertext known
+	\item Known-Plaintext: Plaintext and ciphertext known
+	\item Ciphertext-only: Ciphertext known
+	\item Chosen-cihpertext: Ciphertext influenced and sent to decrypter,
+		feedback (eg response time, content) observed
+\end{itemize}
+
+In public-key cryptography: Increase of adversarial power for KPA, CPA, CCA,
+since everyone able to encrypt anyway, but ciphertext normally not chosen
+freely.
+
+For symmetric encryption there is no such direct relation, but anything secure
+to CCA is also secure to CPA.
+
+\section{Security against CPA}
+
+$\Sigma$ is secure against CPA if the following two libraries are indistinguishable.
+
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L^\Sigma_{\text{CPA-Left}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			$k \leftarrow \{0, 1\}^\lambda$
+			EAVESDROP($m_l, m_r$):
+			  if $|m_l| \neq |m_r|$:
+			    return nil
+
+			  return $\Sigma.enc(k, m_l)$
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$L^\Sigma_{\text{CPA-Right}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			$k \leftarrow \{0, 1\}^\lambda$
+			EAVESDROP($m_l, m_r$):
+			  if $|m_l| \neq |m_r|$:
+			    return nil
+
+			  return $\Sigma.enc(k, m_r)$
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+Equality of lengths prevents having to pad ciphertext to fixed length.
+Encryption must be non-deterministic, else $EAVESDROP(x, x) == EAVESDROP(x, y)$
+would be a distingiusher with advantage $1$ due to the correctness requirement.
+
+\section{Making non-deterministic encryption}
+
+\begin{description}
+	\item[Stateful] Keep state inside $\Sigma$, eg a counter. Complex
+		implementation, needs synchronization between encryption and
+		decryption.
+	\item[Randomization in encryption] Randomness becomes part of
+		ciphertext, increases length.
+	\item[Nonce-based encryption] Each call to $\Sigma.enc$ has to supply a
+		nonce (number used only once). Pushes responsibility to caller.
+\end{description}
+
+\section{Pseudorandom ciphertext `cpa\$'}
+
+$\Sigma$ has pseudorandom ciphertext security against CPA if following two
+libraries are indistinguishable.
+
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L^\Sigma_{\text{CPA\$-Real}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			$k \leftarrow \{0, 1\}^\lambda$
+			CTXT(m):
+			  return $\Sigma.enc(k, m)$
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$L^\Sigma_{\text{CPA\$-Rand}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			$k \leftarrow \{0, 1\}^\lambda$
+			CTXT(m):
+			  # Random ciphertext such that length correlates with
+			  # length of message.
+			  $r \leftarrow \Sigma.C | |r| ~ |m|$
+			  return $r$
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+Pseudorandom ciphertext security implies CPA. Inverse does not hold.
+
+\subsection{CPA\$ security from a secure PRF}
+
+If $F: \{0, 1\}^\lambda \times \{0, 1\}^\lambda \rightarrow \{0, 1\}^\lambda$
+be a secure PRF. Then:
+
+\begin{library}{$L^\Sigma_{\text{CPA\$-Rand}}$}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		$\Sigma.KeyGen()$:
+		  $k \leftarrow \{0, 1\}^\lambda$
+		  ret k
+
+		$\Sigma.Enc(k, m)$:
+		  $r \leftarrow \{0, 1\}^\lambda$
+		  $k' := F(k, r)$
+		  $x := k' \oplus m$
+
+		  ret x, r
+
+		$\Sigma.Dec(k, r, c)$:
+		  $k' := F(k, r)$
+		  $m := c \oplus k'$
+
+		  ret m
+	\end{lstlisting}
+\end{library}
+
+As $r$ can be revealed since the attacker does not have access to $k$, it is
+likely also ok to use a predictable (eg counting) value of $r$.
+
+\subsection{Block ciphers in practice}
+
+Block ciphers are PRPs. Block lengths are usually 128 bits, with various modes
+of operation suporting CPA-secure encryption of arbitrary-length inputs, often
+with padding.
+
+
+\chapter{Encryption modes}
+
+\section{Length expansion}
+
+Ciphertext length is correlated with plaintext length, but the need to further
+store initialization vectors, or pad the plaintext, requires a length expansion
+in anything but the counter mode.
+
+Usually no relevancy in communication as those use padding, checksums etc
+anyway, as well as providing support for transparent packet fragmentation.
+Relevancy in storage however, as transparent encryption layer cannot be between
+FS and disk, since 1:1 relation of data and written bytes.
+
+\subsection{PKCS\#7 padding}
+
+If n bytes missing for full block, bad with n bytes, each containing the value
+of n. If block full, pad with full block to ensure padding recognizable.
+
+\section{ECB}
+
+Encrypt each block independently, ciphertext is concatenation of encrypted
+blocks. Insecure as patterns in data still visible.
+
+\section{CBC Cipher Block Chaining}
+
+$c_0$ is IV. Afterwards, $c_i := F_k(m_i \oplus c_{i-1})$. For Decryption $m_i
+:= F^{-1}_k(c_i) \oplus c_{i - 1}$.
+
+\section{CTR Counter}
+
+$c_0$ is IV of counter $cnt$. $c_i := F_k(cnt) \oplus m_i$, with $cnt$
+increased after every encryption operation.
+
+\section{OFB Output Feedback}
+
+$c_0$ IV. $c_i := F_k(x_i) \oplus m_i$, with $x_i$ being IV for first
+operation, and $x_i := F_k(x_{i-1}$ otherwise.
+
+
+\chapter{Diffie Hellman key agreement}
+
+\section{Modular arithmetic}
+
+\subsection{Integer division}
+
+For $a, d$ rational numbers, there exists quotient $q$, remainder $r$ such that
+$a = d * q + r$, where $0 \leq r \leq |d - 1|$.
+
+\subsection{Congruence relation}
+
+$a \equiv b (mod m)$ or $a \equiv_{m} b \Leftrightarrow m | (a - b)$
+
+\subsection{Integers mod $m$}
+
+$Z_m := \{0, 1, \cdots, m - 1\}$
+
+\subsection{Group}
+
+A group $<G, *, 1>$ consist of a set $G$, an operation $*$ and a neutral element $1$ such that:
+\begin{itemize}
+	\item $\forall a, b \in G: a * b \in G$
+	\item $\forall a \in G: 1 * a = a * 1 = a$
+	\item $\forall a in G: \exist a^{-1} \in G: a * a^{-1} = 1$
+	\item The operation is associative
+\end{itemize}
+
+\subsubsection{Examples}
+
+\begin{itemize}
+	\item $Z_m := <Z_m, +, 0>$
+	\item $Z^{*}_p := <\{1, 2, \cdots, p - 1\}, *, 1>$
+\end{itemize}
+
+\subsubsection{Cyclic group}
+
+A group $G$ is cyclic if there is some $g \in G$, called generator, such that
+$G = \{g^0, g^1, \cdots, ...\}$. Notation: $<g> = G$
+
+\subsubsection{Primitive root}
+
+If $<g>_p = Z^{*}_p$ then g is a primitive root.
+
+Integers mod m: $<g>_m \subset Z^{*}_m$, $<g>_m = \{g^1 mod m, g^2 mod m, \cdots\}$
+
+\subsubsection{Examples of cyclic groups}
+
+\begin{itemize}
+	\item $<1>_{11} = \{1\}$, cycle of length 1
+	\item $<2>_{11} = \{1, 2, 4, 8, 5, 10, 9, 7, 3, 6\}$, cycle of length 10
+\end{itemize}
+
+\subsubsection{Order of a group}
+
+The order of group $G$ $|G|$ is the number of elements contained within.
+
+\section{Discrete logarithms}
+
+In a cyclic group $G$, the discrete log of $y$ in $G$ with respect to a
+primitive root $g$ is defined as $x \in Z_{|G|} : g^x = y$. This is assumed to
+be a hard problem.
+
+\subsection{Discrete logarith problem DLP}
+
+Given $y \in G$, compute $x : g^x = y$. For certain groups the DLP is
+conjectured to be computationally hard:
+
+\begin{itemize}
+	\item Prime-order subgroups of $Z^{*}_p$, $p$ prime, $|p|$ around $2000$
+	\item Groups over points on elliptic curves
+\end{itemize}
+
+\section{Diffie Hellman key agreement}
+
+Given $G = <g>$ of order $q$.
+
+\begin{lstlisting}[mathescape=true,autogobble=true]
+	Alice					Bob
+	$a \leftarrow Z_q$			$b \leftarrow Z_q$
+	$X := g^a$				$Y := g^b$
+			Exchange $X, Y$
+	$Z_A := Y^a$				$Z_B := X^b$
+\end{lstlisting}
+
+Then: $Z_A = Z_B = g^{ab}$
+
+\subsection{Security}
+
+Communication is public but authenticated. Eve can listen in on public
+information ($X, Y$ and $G$) but not influence the messages.
+
+If Eve can compute DLP then it's not secure, otherwise $Z_A = Z_B$ is a
+pseudo-random element from the group, indistinguishable in polynomial time.
+
+\section{Key agreement protocol security}
+
+Protocol $\Pi$ generates a key $k \in \Pi.k$, and a transcript $T \in \{0,
+1\}^{*}$.
+
+The key agreement protocol $\Pi$ is secure if the following two libraries are
+indistinguishable:
+
+
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L^\Pi_{\text{KA-Real}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			QUERY():
+			  (k, T) := EXEC($\Pi$)
+			  return (k, T)
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$L^\Pi_{\text{KA-Rand}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			QUERY():
+			  # Ensure correct probability distribution of T
+			  (k, T) := EXEC($\Pi$)
+			  $k^{*} \leftarrow \Pi.K$
+			  return ($k^{*}, T)
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+In either case Eve sees $(g^a, g^b, g^c)$. In the case of KA-Real, $c = a*b$,
+in the case of KA-Rand $c$ is independent.
+
+This assumption is stronger than not being able to compute the discrete
+logarithm or the key.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \end{document}
 
