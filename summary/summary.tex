@@ -1046,6 +1046,173 @@ that $TEST(x, c) \rightarrow True$ with probability 1:
 RSR is an indication that a problem is good for security, as it implies that it
 is secure on average, and not only in the worst case.
 
+\chapter{Digital signatures}
+
+\section{Definition of signature scheme $\Gamma$}
+
+\begin{lstlisting}[mathescape=true,autogobble=true]
+	M message space
+	$\Sigma$ signature space
+
+	KeyGen() -> (pk, sk)
+
+	Sign(sk, m) -> $\sigma$
+
+	Ver(pk, m, $\sigma$) -> True/False
+\end{lstlisting}
+
+\section{Security of signature scheme}
+
+Intuition: Secure if adversary not able to fabricate a valid message /
+signature pair on his own.
+
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L^\Gamma_{\text{Sig-Real}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			(pk, sk) <- Gamma.KeyGen()
+
+			GETPK():
+			  return pk
+
+			GETSIG(m):
+			  return Gamma.Sign(sk, m)
+
+			CHECKSIG(m, sigma):
+			  return Gamma.Ver(pk, m, sigma)
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$L^\Gamma_{\text{Sig-Ideal}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			(pk, sk) <- Gamma.KeyGen()
+			S = {}
+
+			GETPK():
+			  return pk
+
+			GETSIG(m):
+			  sigma := Gamma.Sign(sk, m)
+			  S << (m, sigma)
+			  return sigma
+
+			CHECKSIG(m, sigma):
+			  return (m, sigma) in S
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+\section{RSA signatures}
+
+\subsection{RSA textbook signature (insecure)}
+
+\begin{library}{Textbook RSA signature}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		KeyGen():
+		  return RSA.KeyGen()
+
+		Sign(sk, m):
+		  return RSA.Invert(sk, m)
+
+		Ver(pk, m, sigma):
+		return RSA.Eval(pk, sigma) == m
+	\end{lstlisting}
+\end{library}
+
+Insecure as malleability of RSA allows forging new signatures.
+
+\begin{lstlisting}[mathescape=true,autogobble=true]
+	$m_1, m_2$ messages
+
+	$\sigma_1 := Sign(pk, m_1)$
+	$\sigma_2 := Sign(pk, m_2)$
+
+	It holds:
+	$\sigma_1^e \equiv_N m_1$
+	$\sigma_2^e \equiv_N m_2$
+
+	Now:
+	$(sigma_1 * sigma_2)^e \equiv_N m_1 * m_2$
+
+	To forge a signature on $m := m_1 * m_2$, compute $\sigma := \sigma_1 * \sigma_2$
+\end{lstlisting}
+
+As $m_1, m_2$ can be chosen such that $m = m_1 * m_2$, this breaks the security definition. Worse, signatures can be produced without calling $\Gamma.Sign$: 
+
+\begin{lstlisting}[mathescape=true,autogobble=true]
+	Pick random $\sigma'$ in signature space
+	$m' := RSA.Eval(pk, \sigma') = (sigma')^e mod N$
+	This satisfies $(sigma')^e \equiv_N m'$
+	So:
+	Ver($pk, m', \sigma'$) = True
+\end{lstlisting}
+
+\subsection{RSA full-domain-hash signatures}
+
+Proper signatures with RSA in ROM: Break connection between message $m$ and
+signature $\sigma$ by using a hash function $H$, and signing its output.
+
+Let $H: \{0, 1\}^{*} \rightarrow Z_N^{*}$, with $|N| ~ 2048$, $J: \{0, 1\}^{*}
+\rightarrow \{0, 1\}^k$, with eg $k = 256$.
+
+Define $H(x) := J(0 || x) || J(1 || x) || \cdots || J(l - 1 || x)$, this way
+hash value will have equal length as RSA modulus.
+
+\begin{library}{FDH-RSA}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		KeyGen():
+		  # Same as textbook
+		  return RSA.KeyGen()
+
+		Sign(sk, m):
+		  return RSA.Invert(sk, H(m))
+
+		Ver(pk, m, sigma):
+		  return RSA.Eval(pk, sigma) == H(m)
+	\end{lstlisting}
+\end{library}
+
+
+\subsection{Schnorr signatures}
+
+Not as popular as eg DSA due to patent issues, PK signatures based on DLP.
+
+\begin{library}{Schnorr signatures}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		$H: {0, 1}^{*} \rightarrow Z_q$
+
+		KeyGen():
+		  $x \leftarrow Z_q$
+		  return ($g^x, x$)
+
+		Sign(x, m):
+		  $r \leftarrow Z_q$
+		  $t := g^r mod p$
+		  $c := H(m || t)$
+		  $s := r - c * x mod q$
+		  return (c, s)
+
+		Ver(Y, m, (c, s)):
+		  $t' := g^s * Y^c mod p$
+		  return $c == H(m || t')$
+	\end{lstlisting}
+\end{library}
+
+\subsection{DSA}
+
+Standardized `cousin' of Schnorr signatures, found in libraries usually as
+ECDSA.
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \end{document}
 
