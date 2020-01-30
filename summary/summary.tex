@@ -666,7 +666,8 @@ Given $y \in G$, compute $x : g^x = y$. For certain groups the DLP is
 conjectured to be computationally hard:
 
 \begin{itemize}
-	\item Prime-order subgroups of $Z^{*}_p$, $p$ prime, $|p|$ around $2000$
+	\item Prime-order subgroups of $Z^{*}_p$, $p$ prime, $|p|$ (length of
+		prime?) around $2000$
 	\item Groups over points on elliptic curves
 \end{itemize}
 
@@ -726,26 +727,324 @@ in the case of KA-Rand $c$ is independent.
 This assumption is stronger than not being able to compute the discrete
 logarithm or the key.
 
+\chapter{Problems and assumptions in discrete-log type cryptography}
+
+\section{DLP}
+
+Given $Y := g^x, x \in Z_q$, compute $x \ in Z_q$.
+
+\section{CDHP (computational DH problem)}
+
+Given $A := g^a, B := g^b, a, b \in Z_q$, compute $C := g^{ab}$. Weaker than
+DLP.
+
+\section{DDHP (decisional DH problem)}
+
+Given $A := g^a, B := g^b, C := g^{x ? ab : c}, C' := g^c, a, b, c \in Z_q, x
+\in \{0, 1\}$, distinguish $C$ and $C'$.
+
+\section{DH KA protocol}
+
+DH KA has security under DDHP, and hence also under CDHP and DLP.
+
+\chapter{Public key cryptosystems}
+
+Each user has public/private keypair. $O(n)$ keys in network of $n$ users,
+compared to $O(n^2)$ in symmetric cryptosystems.
+
+\section{Public key cryptosystem $\Sigma$}
+
+$\Sigma$ consist of $M$ message space, $C$ cipher space, $KeyGen() \rightarrow
+(pk, sk)$, $Enc(pk, m) \rightarrow c$, $Dec(sk, c) \rightarrow m'$.
+
+\section{Security against pk-CPA}
+
+$\Sigma$ has security against CPA if following two libraries indistinguishable:
+
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L^\Sigma_{\text{PK-CPA-L}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			$(pk, sk) \leftarrow \Sigma.KeyGen()$
+
+			GETKEY():
+			  return pk
+
+			TEST($m_l, m_r$):
+			  return Enc(pk, $m_l$)
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$L^\Sigma_{\text{PK-CPA-R}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			$(pk, sk) \leftarrow \Sigma.KeyGen()$
+
+			GETKEY():
+			  return pk
+
+			TEST($m_l, m_r$):
+			  return Enc(pk, $m_r$)
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+Encryption must once more be non-deterministic as the attacker can encrypt
+messages himself.
+
+\section{Pseudorandom ciphertext against pk-CPA}
+
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L^\Sigma_{\text{PK-CPA\$-Real}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			$(pk, sk) \leftarrow \Sigma.KeyGen()$
+
+			GETKEY():
+			  return pk
+
+			CTXT(m):
+			  return Enc(pk, m)
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$L^\Sigma_{\text{PK-CPA\$-Rand}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			$(pk, sk) \leftarrow \Sigma.KeyGen()$
+
+			GETKEY():
+			  return pk
+
+			CTXT(m):
+			  # Pick such that lengths correlate
+			  $c \leftarrow \Sigma.C$
+			  return c
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
+
+PK-CPA\$-security implies PK-CPA-security.
+
+\section{ElGamal cryptosystem}
+
+Public-key cryptosystem based on DH.
+
+\begin{library}{ElGamal}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		G = <g>
+		|G| = q
+
+		KeyGen():
+		  $x \leftarrow Z_q$
+		  $Y := g^x$
+		  return (Y, x)
+
+		Enc(Y, m):
+		  $r \leftarrow Z_q$
+		  $R := g^r$
+		  $C := m * Y^r$
+
+		  return (R, C)
+
+		Dec(x, (R, C)):
+		  $m' := C / R^x$
+		  return m'
+	\end{lstlisting}
+\end{library}
+
+\subsection{Hashed ElGamal}
+
+Using a hash function $H: G \rightarrow \{0, 1\}^k$ as a random oracle.
+
+\begin{library}{Hashed ElGamal}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		M = \{0, 1\}^k
+		C = G * \{0, 1\}^k
+
+		KeyGen():
+		  $x \leftarrow Z_q$
+		  $Y := g^x$
+		  return (Y, x)
+
+		Enc(Y, m):
+		  $r \leftarrow Z_q$
+		  $R := g^r$
+		  $C := m \oplus H(Y^r)$
+
+		  return (R, C)
+
+		Dec(x, (R, C)):
+		  $h := H(R^x)$
+		  $m' := C \oplus h$
+		  return m'
+	\end{lstlisting}
+\end{library}
+
+\subsubsection{$H$ in random oracle model (ROM)}
+
+\begin{lstlisting}[mathescape=true,autogobble=true]
+	T := []
+	H($x \in \{0, 1\}^{*}):
+	  if x not in T:
+	    T[x] $\leftarrow \{0, 1\}^k$
+	  return T[x]
+\end{lstlisting}
+
+\chapter{RSA}
+
+% TODO: RSA basics
+
+RSA is first public-key cryptosystem with signatures. Compare DH: Just key
+exchange. ElGamal: Just encryption.
+
+RSA is deterministic, and as such not suitable for direct usage as not
+CPA-secure.
+
+Restricting $Z^{*}_m := \{a \in Z_m : gcd(a, m) = 1\}$ allows to then compute
+the inverse using the extended euclidian algorithm. $egcd(a, b) = (g, s, t)$
+then $1 = s*a + t*m \Leftrightarrow s * a \equiv_m 1$.
+
+$gcd(a, m) = 1$ is required to prevent one factor of $m = pq$ being known,
+which would conflict the assumption that $m$ is hard to factor.
 
 
+\section{Euler ($\Phi$) function}
+
+\[
+	\Phi: Z^{+} \rightarrow Z^{+}, m \rightarrow |Z^{*}_m| = |\{a \in Z_m : gcd(a, m) = 1\}|
+\]
+
+Ie the number of factors in $Z_m$ which are coprime to m, that is $gcd(a, m) =
+1$.
+
+\section{RSA function}
+
+\begin{lstlisting}[mathescape=true,autogobble=true]
+	KeyGen():
+	  # Lambda on order of 1000 bits these days
+	  $p \leftarrow PRIMES(\lambda)$
+	  $q \leftarrow PRIMES(\lambda)$
+
+	  $N := pq$
+
+	  # e can also be a fixed 'small' prime (smaller than lambda)
+	  $e \leftarrow PRIMES(\lambda)$
+	  # That is $e * d \equiv_{\phi(N)} 1
+	  $d := e^{-1} mod \phi(N)$
+
+	  return ((N, e), d)
+
+	Eval((n, e), x):
+	  return $x^e mod N$
+
+	Invert(d, y):
+	  return $y^d mod N$
+\end{lstlisting}
 
 
+\subsection{RSA security}
 
 
+\begin{tcbraster}[raster columns=2,raster equal height,nobeforeafter,raster column skip=2cm]
+	\begin{library}{$L_{\text{RSA-Real}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			((N, e), d) := KeyGen()
+			c := {}
 
+			GETKEY():
+			  return (N, e)
 
+			GETRAND():
+			  $c \leftarrow Z_N$
+			  $C << c$
 
+			  return c
 
+			TEST(x, c):
+			  if c not in C:
+			    return false
 
+			  if $x^e \equiv_N c$:
+			    return true
+			  else:
+			    return false
+		\end{lstlisting}
+	\end{library}
+	\begin{library}{$L_{\text{RSA-Fake}}$}
+		\begin{lstlisting}[mathescape=true,autogobble=true]
+			# Identical, except:
+			TEST(x, c):
+			  return false
+		\end{lstlisting}
+	\end{library}
+\end{tcbraster}
 
+Restricting choices of $c$ prevents adversary from manufacturing one value
+based on public key which would allow to distinguish the libraries.
 
+\section{Textbook RSA encryption}
 
+Not CPA-secure as deterministic.
 
+\begin{library}{$L_{\text{RSA}}$}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		$(pk, sk) \leftarrow KeyGen()$
+		Enc(pk, m) = Eval(pk, m)
+		Dec(sk, c) = Invert(sk, c)
+	\end{lstlisting}
+\end{library}
 
+\section{Secure encryption with RSA, with random oracle}
 
+\begin{library}{$L_{\text{RSA}}$}
+	\begin{lstlisting}[mathescape=true,autogobble=true]
+		KeyGen() # as in RSA, pk further contains hash function H
 
+		Encrypt((N, e), m):
+		  $r \leftarrow Z_N$
+		  $R := Eval((N, e), r)$
+		  $C := H(r) \oplus m$
+		  return (R, C)
 
+		Decrypt(sk, (R, C)):
+		  $r := Invert(sk, R)$
+		  $m := H(r) \oplus C$
+		  return m
+	\end{lstlisting}
+\end{library}
 
+Random oracle H used, rather than multiplying directly with random value $r$,
+to break possible structures. In practice: OAEP with RSA (optimal asymmetric
+encryption padding). Advantage over RO in that only one 2k bit component
+(rather than two in RO) needed from which to extract message.
+
+Security holds as:
+\begin{itemize}
+	\item RSA function only applied to randomly chosen values in $Z_N$
+	\item RSA function decoupled from message $m$ using RO $H$
+	\item Formal security in book
+\end{itemize}
+
+\section{Random self reduction}
+
+RSR shows that the worst case is not more dificult than the average case. RSR
+turns an algorithm which solves the average case into one which solves the
+worst case with only a constant factor as difference.
+
+Assume $A^{*}(c)$ outputs $x$ such that $TEST(x, c \rightarrow True$ with
+probability $\delta$ (constant). Then there is a $B(c)$ which outputs $x$ such
+that $TEST(x, c) \rightarrow True$ with probability 1:
+
+\begin{lstlisting}[mathescape=true,autogobble=true]
+	B(c):
+	  $(N, e) \leftarrow KeyGen()$
+	  repeat
+	    $r \leftarrow Z_N$
+	    $c' := r^e * c$
+	    $x' := A^{*}(c')$ # Correct with probability delta
+	    $x : x' * r^{-1} mod N$
+	  until $x^e \equiv_N c$
+
+	  return x
+\end{lstlisting}
+
+RSR is an indication that a problem is good for security, as it implies that it
+is secure on average, and not only in the worst case.
 
 
 \end{document}
