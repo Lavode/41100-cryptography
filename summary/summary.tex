@@ -621,7 +621,7 @@ A group $<G, *, 1>$ consist of a set $G$, an operation $*$ and a neutral element
 \begin{itemize}
 	\item $\forall a, b \in G: a * b \in G$
 	\item $\forall a \in G: 1 * a = a * 1 = a$
-	\item $\forall a in G: \exist a^{-1} \in G: a * a^{-1} = 1$
+	\item $\forall a in G: \exists a^{-1} \in G: a * a^{-1} = 1$
 	\item The operation is associative
 \end{itemize}
 
@@ -716,7 +716,7 @@ indistinguishable:
 			  # Ensure correct probability distribution of T
 			  (k, T) := EXEC($\Pi$)
 			  $k^{*} \leftarrow \Pi.K$
-			  return ($k^{*}, T)
+			  return ($k^{*}$, T)
 		\end{lstlisting}
 	\end{library}
 \end{tcbraster}
@@ -731,7 +731,7 @@ logarithm or the key.
 
 \section{DLP}
 
-Given $Y := g^x, x \in Z_q$, compute $x \ in Z_q$.
+Given $Y := g^x, x \in Z_q$, compute $x \in Z_q$.
 
 \section{CDHP (computational DH problem)}
 
@@ -924,7 +924,7 @@ Ie the number of factors in $Z_m$ which are coprime to m, that is $gcd(a, m) =
 
 	  # e can also be a fixed 'small' prime (smaller than lambda)
 	  $e \leftarrow PRIMES(\lambda)$
-	  # That is $e * d \equiv_{\phi(N)} 1
+	  # That is $e * d \equiv_{\phi(N)} 1$
 	  $d := e^{-1} mod \phi(N)$
 
 	  return ((N, e), d)
@@ -1201,16 +1201,101 @@ Not as popular as eg DSA due to patent issues, PK signatures based on DLP.
 Standardized `cousin' of Schnorr signatures, found in libraries usually as
 ECDSA.
 
+\chapter{Zero knowledge proofs of knowledge}
+
+Goal: Prove knowledge of a secret without revealing it. Applications for
+identification protocols, secure computation with robustness against malicious
+participants, verifiable encryption (prove that you encrypted something), ...
+
+\section{Interactive proof of knowledge of a discrete logarithm}
+
+Prover $P$, verifier $V$, both known public statement $y$, prover knows secret
+$x$ such that $\Psi(y, x) = True$, $V$ will output True/False depending on
+whether it accepts the proof.
+
+\subsection{Properties}
+
+\subsubsection{Completness}
+
+If $P$ has input $x$ such that $\Psi(y, x) = True$ then V accepts.
+
+\subsubsection{Soundness}
+
+For a 3-move protocol (3 messages exchanged) of the following form:
+
+\begin{lstlisting}[mathescape=true,autogobble=true]
+	1) P -- t --> V
+	2) P <- c --- V
+	3) P -- s --> V => $\Phi(y, s)$
+\end{lstlisting}
+
+There exists an efficient algorithm (`knowledge extractor') that, when given
+two transcripts where $V$ accepted $(t, c, s), (t, c', s'), c \neq c'$, can
+output $x$ with $\Psi(y, x) = True$.
+
+This is desired (even though it sounds `bad') because it must be possible to
+get the knowledge efficiently.
 
 
+\subsubsection{Zero-knowledge}
 
+V can simulate the transcript with P on its own, without knowing $x$,
+generating the same distribution of messages. However it does not have to
+generate them in the same order.
 
+Perfect vs computational zero-knowledge: Distribution of messages (simulated vs
+real) exchangable vs indistinguishable.
 
+\subsection{ZK-PoK of discrete log}
 
+\begin{lstlisting}[mathescape=true,autogobble=true]
+	G = <g>
+	|G| = q
+	$G \in Z_p$
 
+	P(x, y)				V(y)
+	$r \leftarrow Z_q$
+	$t := g^r$ 	--->		$t$
+	$c$      	<---		$c \leftarrow Z_q$
+	$s := r - cx$	--->		$s$
+					return $t \equiv_p g^s * y^c$
+\end{lstlisting}
 
+$(r, t)$ commitment, $c$ challenge, $s$ response.
 
+\subsubsection{Completness}
 
+\[
+	g^r = t = g^{r - cx} * y^c = g^{r - cx} * g^{xc} = g^r
+\]
+
+\subsubsection{Soundness}
+
+Given two transcripts $(t, c, s), (t, c', s'), c \neq c'$, such that $V$
+accepts both, we can compute $x$.
+
+\subsubsection{Zero-knowledge}
+
+V can generate fake transcript $(T, C, S)$ for given $y$ with the same
+distribution:
+
+\begin{lstlisting}[mathescape=true,autogobble=true]
+	$C \leftarrow Z_q$
+	$S \leftarrow Z_q$
+	$T := g^S y^C$
+\end{lstlisting}
+
+\subsubsection{Making ZK-PoK non-interactive}
+
+Order of generation of $t, c, s$ was crucial (else simulation possible). Hence order must be retained when removing interaction. Using one-way function (eg hash) on $t$ to determine $c$ allows removing interaction, called the `fiat-shamir' transformation.
+
+\begin{enumerate}
+	\item Start from PoK, which is 3-move protocol
+	\item Add context (message $m$)
+	\item Apply Fiat-Shamir transformation, $c := H(t || m)$
+	\item Output self-generated transcript of ZKP
+	\item Verify with verification step of ZKP (act as $V$).
+\end{enumerate}
 
 
 
